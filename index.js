@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import dbConfig from './database/db.js'
 import cookieParser from 'cookie-parser';
 import feedRoutes from './routes/feedRoutes.js';
+import collabRoutes from './routes/collabRoutes.js'
 
 const { db } = dbConfig
 const server = express();
@@ -29,6 +30,7 @@ server.use('/profile', profileRoutes)
 server.use('/', songRoutes)
 server.use('/auth', authRoutes)
 server.use('/', feedRoutes)
+server.use('/collab', collabRoutes)
 
 process.on('exit', () => {
   db.destroy();

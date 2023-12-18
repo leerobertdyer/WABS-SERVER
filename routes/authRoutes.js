@@ -33,10 +33,10 @@ let tempAuthToken = ''
 
 authRoutes.get('/dbx-auth-callback', async (req, res) => {
   const { code } = req.query;
-  // console.log('auth callback cookie: ', req.cookies.user)
+  console.log('auth callback cookie: ', req.cookies.user)
   const userId = req.cookies.user.user_id
   try {
-    // console.log('received auth code: ', code)
+    console.log('received auth code: ', code)
     if (tempAuthToken === '') {
       const tokenResponse = await dbx.auth.getAccessTokenFromCode(REDIRECT_URI, code);
       // console.log('token response: ', tokenResponse)
@@ -113,6 +113,7 @@ authRoutes.post('/login', (req, res) => {
 
   authRoutes.post('/register', (req, res) => {
     const { email, username, password } = req.body;
+    console.log(email, username, password);
     if (!email || !username || !password) {
       return res.status(400).json('Missing email, username, or password...')
     }
