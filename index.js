@@ -16,7 +16,7 @@ const port = 4000;
 server.use(express.json());
 console.log(process.env.REACT_APP_FRONTEND_URL);
 const corsOptions = {
-  origin: [process.env.REACT_APP_FRONTEND_URL,`${process.env.REACT_APP_FRONTEND_URL}/`],
+  origin:`${process.env.REACT_APP_FRONTEND_URL}/*`,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
