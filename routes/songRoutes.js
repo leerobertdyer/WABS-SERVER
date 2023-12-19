@@ -16,7 +16,7 @@ const createSharedLink = async(req) => {
   if (!(await isAccessTokenValid(token))) {
     // console.log('expired, sending 4 new token')
     token = await refreshToken(user.user_id, token);
-    // console.log(token)
+    // console.log(token) //fucking test bro
   }
   await dbx.auth.setAccessToken(token)
 
