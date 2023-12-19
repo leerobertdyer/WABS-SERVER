@@ -14,23 +14,15 @@ const port = 4000;
 
 /////////// Middleware ////////////
 server.use(express.json());
-const corsMiddleware = (req, res, next) => {
-  const allowedOrigins = [
-    process.env.REACT_APP_FRONTEND_URL,
-    `${process.env.REACT_APP_FRONTEND_URL}/`,
-  ];
-  if (!allowedOrigins.includes(req.headers.origin)) {
-    return res.sendStatus(403); 
-  }
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE'); 
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', true); 
-  next();
+console.log(process.env.REACT_APP_FRONTEND_URL);
+const corsOptions = {
+  origin:[process.env.REACT_APP_FRONTEND_URL, `${process.env.REACT_APP_FRONTEND_URL}/`],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204,
 };
 
-server.use(corsMiddleware);
-
+server.use(cors(corsOptions));
 server.use(cookieParser())
 
             //////ROUTES//////
