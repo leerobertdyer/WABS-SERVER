@@ -34,6 +34,7 @@ collabRoutes.put('/update-collab', async (req, res) => {
       const currentCollab = await db('users')
         .where('user_id', id)
         .select('collab')
+      console.log('currentCollab: ', currentCollab);
       if (currentCollab[0].collab === "false"){
         await db('users')
         .where('user_id', id)

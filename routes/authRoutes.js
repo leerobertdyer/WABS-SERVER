@@ -88,7 +88,7 @@ authRoutes.post('/login', (req, res) => {
                   const dbxToken = dbxTokenData.length > 0 
                   ? dbxTokenData[0].token
                   : null
-
+                  
                   res.cookie('user', userData[0], { maxAge: 30000000, httpOnly: true, path: '/' });
                   if (dbxToken) {
                     res.cookie('token', dbxToken, { maxAge: 30000000, httpOnly: true, path: '/' });

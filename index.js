@@ -23,7 +23,7 @@ const corsOptions = {
 };
 
 server.use(cors(corsOptions));
-server.use(cookieParser())
+server.use(cookieParser(process.env.COOKIE_SECRET, { sameSite: 'None', secure: true })); 
 
             //////ROUTES//////
 server.use('/profile', profileRoutes)
