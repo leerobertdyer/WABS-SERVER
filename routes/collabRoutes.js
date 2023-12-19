@@ -51,7 +51,7 @@ collabRoutes.put('/update-collab', async (req, res) => {
         nextCollab = 'false'
         req.cookies.user.collab = 'false'
       }
-      res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: true, path: '/', domain: 'www.writeabadsong.com' });
+      res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: true, path: '/', domain: 'writeabadsong.com' });
       res.status(200).json({nextCollab: nextCollab});
       console.log('this: ', req.cookies.user)
     } catch (err) {
