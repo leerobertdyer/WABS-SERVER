@@ -24,7 +24,7 @@ profileRoutes.put('/update-status', async (req, res) => {
           user_id: id,
           feed_status: newStatus
         })
-    res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: true, path: '/' });
+    res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: false, path: '/' });
     res.status(200).json({ status: newStatus })
   } catch (error) {
     console.error('Error setting new status in Database', error);
@@ -86,7 +86,7 @@ profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res
         feed_pic: databaseLink
       })
     req.cookies.user.user_profile_pic = databaseLink
-    res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: true, path: '/' });
+    res.cookie('user', req.cookies.user, { maxAge: 3000000, httpOnly: false, path: '/' });
     res.status(200).json({ newPhoto: databaseLink })
   } catch (error) {
     console.error('Error updating Database: ', error);
