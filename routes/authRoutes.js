@@ -50,7 +50,7 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
         token: tempAuthToken,
         refresh: refreshToken
       })
-      res.cookie('token', tempAuthToken, { maxAge: 30000000, path: '/', sameSite: 'none' });
+      res.cookie('token', tempAuthToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
       tempAuthToken = ''
       res.redirect(process.env.REACT_APP_FRONTEND_URL)
     }
@@ -89,9 +89,9 @@ authRoutes.post('/login', (req, res) => {
                   ? dbxTokenData[0].token
                   : null
 
-                  res.cookie('user', userData[0], { maxAge: 30000000, path: '/', sameSite: 'none' });
+                  res.cookie('user', userData[0], { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
                   if (dbxToken) {
-                    res.cookie('token', dbxToken, { maxAge: 30000000, path: '/', sameSite: 'none' });
+                    res.cookie('token', dbxToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
                   }
                   // console.log('user logged in: ', userData[0])
                   // console.log('user token generated: ', dbxToken)
@@ -144,7 +144,7 @@ authRoutes.post('/login', (req, res) => {
               })
               .then((user) => {
                 trx.commit();
-                res.cookie('user', userData, { maxAge: 30000000, path: '/', sameSite: 'none' });
+                res.cookie('user', userData, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
                 res.json(userData);
               });
           })
