@@ -120,7 +120,14 @@ collabRoutes.get('/get-profile-collabs', async(req, res) => {
     const userCollabs = await db('collab').select("*")
     .where('collab.user_id', user_id).orWhere('collab.partner_id', user_id)
     .innerJoin('feed', 'collab.feed_id', 'feed.feed_id')
-    console.log(userCollabs); // // // 
+
+    for (const song of userCollabs) {
+      if (song.music_id) {
+        const url = await db('music').where('music_id', song.music_id).select('song_file')
+        song.music = url[0].song_file
+      }
+    }
+    
     res.status(200).json({userCollabs: userCollabs})
   } catch(err) {
     console.error(`Error Getting userCollabs from db: ${err}`)
