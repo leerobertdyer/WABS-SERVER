@@ -1,9 +1,9 @@
 import { Router } from "express";
-import multer from 'multer';
 import dbConfig from '../database/db.js'
 const { db } = dbConfig
 import dropboxConfig from '../services/dropbox.js'
 const { dbx, isAccessTokenValid, refreshToken } = dropboxConfig
+import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 import knex from "knex";

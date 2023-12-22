@@ -133,4 +133,4 @@ try {
 });
 
 
-export default songRoutes
+export { createSharedLink, songRoutes };
