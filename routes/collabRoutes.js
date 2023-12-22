@@ -118,7 +118,8 @@ collabRoutes.get('/get-profile-collabs', async(req, res) => {
   const user_id = req.cookies.user.user_id
   try {
     const userCollabs = await db('collab').select("*")
-    .where('user_id', user_id).orWhere('partner_id', user_id)
+    .where('collab.user_id', user_id).orWhere('collab.partner_id', user_id)
+    .innerJoin('feed', 'collab.feed_id', 'feed.feed_id')
     console.log(userCollabs); // // // 
     res.status(200).json({userCollabs: userCollabs})
   } catch(err) {
