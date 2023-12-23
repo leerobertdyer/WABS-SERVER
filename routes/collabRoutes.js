@@ -140,4 +140,35 @@ collabRoutes.get('/get-profile-collabs', async (req, res) => {
   }
 })
 
+collabRoutes.post('/finalize', async(req, res) => {
+  if (typeof req.body.song_file === 'number'){
+    try {
+      const databaseInfo = await db('music').select('song_file').where('music_id', req.body.song_file)
+      const databaseLink = databaseInfo[0].song_file
+      //// 
+      /////
+      ///    *** THIS IS WHERE I LEFT OFF AS WELL AS NEXT ROUTE AND DELETE
+    } catch (err) {
+      console.err(`Error with song_file int replacer: ${err}`)
+    }
+
+  }
+  try {
+    console.log(req.body);
+    res.status(200).json({message: 'hell yea'})
+  } catch (err) {
+    console.error(`Error loading new final Collab Song: ${err}`)
+    
+  }
+})
+
+collabRoutes.delete('/cleanup', async(req, res) => {
+  try {
+    await db('collab').select("*").where('collab_id', req.body.collab_id).del();
+    res.status(200).json({message: 'successsss'})
+  } catch (err) {
+    console.error(`Error Deleting Collab After Song Posted: ${err}`)
+  }
+})
+
 export default collabRoutes
