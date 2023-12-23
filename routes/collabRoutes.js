@@ -126,8 +126,10 @@ collabRoutes.get('/get-profile-collabs', async(req, res) => {
         const url = await db('music').where('music_id', song.music_id).select('song_file')
         song.music = url[0].song_file
       }
+        const username = await db('users').where('user_id', song.user_id)
+        song.username = username[0].username
     }
-    
+
     res.status(200).json({userCollabs: userCollabs})
   } catch(err) {
     console.error(`Error Getting userCollabs from db: ${err}`)

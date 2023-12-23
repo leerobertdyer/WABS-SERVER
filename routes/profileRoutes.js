@@ -6,33 +6,10 @@ const { dbx, isAccessTokenValid, refreshToken } = dropboxConfig
 import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-import knex from "knex";
 
 const profileRoutes = Router()
 
-profileRoutes.put('/update-status', async (req, res) => {
-  try {
-    const { id, newStatus } = req.body
-    req.cookies.user.user_status = newStatus
-    await db('users')
-      .where('user_id', id)
-      .update({ user_status: newStatus })
-    await db('feed')
-      .insert(
-        {
-          type: 'status',
-          user_id: id,
-          feed_status: newStatus
-        })
-    res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
-    res.status(200).json({ status: newStatus })
-  } catch (error) {
-    console.error('Error setting new status in Database', error);
-    res.status(500).json({ error: 'Server Status Error' })
-  }
-});
-
-profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res) => {
+const getDatabaseLink = async(req) => {
   let token = req.cookies.token
   const user = req.body.user_id;
   if (!(await isAccessTokenValid(token))) {
@@ -72,28 +49,79 @@ profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res
         databaseLink = linkResponse.result.url.replace('https://www.dropbox.com', 'https://dl.dropboxusercontent.com');
         // console.log('Shareable link:', databaseLink);
       }
+      return databaseLink
     } catch (error) {
       console.error('Error creating/shared link:', error);
     }
+} catch(err) {
+  console.error(`Error getting databaseLink: ${err}`)
+}
+}
 
+profileRoutes.put('/update-status', async (req, res) => {
+  try {
+    const { id, newStatus } = req.body
+    req.cookies.user.user_status = newStatus
     await db('users')
-      .where('user_id', user)
-      .update({ user_profile_pic: databaseLink })
+      .where('user_id', id)
+      .update({ user_status: newStatus })
     await db('feed')
-      .insert({
-        type: 'profile_pic',
-        user_id: user,
-        feed_pic: databaseLink
-      })
-    req.cookies.user.user_profile_pic = databaseLink
+      .insert(
+        {
+          type: 'status',
+          user_id: id,
+          feed_status: newStatus
+        })
     res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
-    res.status(200).json({ newPhoto: databaseLink })
+    res.status(200).json({ status: newStatus })
   } catch (error) {
+    console.error('Error setting new status in Database', error);
+    res.status(500).json({ error: 'Server Status Error' })
+  }
+});
+
+profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res) => {
+  const databaseLink = await getDatabaseLink(req);
+  const user = req.body.user_id;
+ try {
+   await db('users')
+     .where('user_id', user)
+     .update({ user_profile_pic: databaseLink })
+   await db('feed')
+     .insert({
+       type: 'profile_pic',
+       user_id: user,
+       feed_pic: databaseLink
+     })
+   req.cookies.user.user_profile_pic = databaseLink
+   res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
+   res.status(200).json({ newPhoto: databaseLink })
+ } catch (error) {
     console.error('Error updating Database: ', error);
     res.status(500).json({ error: 'Server XXXX Error' })
   }
 });
 
+profileRoutes.put('/upload-background-pic', upload.single('photo'), async (req, res) => {
+  const databaseLink = await getDatabaseLink(req);
+  const user = req.body.user_id;
+  try {
+    await db('users')
+    .where('user_id', user)
+    .update({profile_background: databaseLink})
+    await db('feed')
+    .insert({
+      type: 'profile_background',
+      user_id: user,
+      feed_pic: databaseLink
+    })
+    req.cookies.user.profile_background = databaseLink;
+   res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
+   res.status(200).json({ newPhoto: databaseLink })
+  } catch(err) {
+    console.error(`Error uploading new Background to db: ${err}`)
+  }
+})
 
 
 export default profileRoutes

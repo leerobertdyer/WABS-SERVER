@@ -66,7 +66,7 @@ feedRoutes.delete('/delete-post', async (req, res) => {
             if (feed_type === "song") {
                 try {
                     const songIdData = await db('feed')
-                        .where('feed_id', feed_id)
+                    .where('feed_id', feed_id)
                         .returning('song_id')
                         .del()
 
@@ -84,7 +84,7 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 } catch (err) {
                     console.error(`Error deleting from feed or songs table, ${err.message}`)
                 }
-            } else if (feed_type === "status" || feed_type === "profile_pic") {
+            } else if (feed_type === "status" || feed_type === "profile_pic" || feed_type === "profile_background") {
                 try {
                     await db('feed')
                         .where('feed_id', feed_id)
@@ -121,7 +121,7 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 await db('lyrics')
                 .where('lyric_id', lyricId)
                 .delete()
-            }
+            } 
             res.status(200).json({ message: `Post ${feed_id} deleted.` });
         } catch (err) {
             console.error(`Error deleting post: ${err}`)
