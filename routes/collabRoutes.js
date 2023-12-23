@@ -14,8 +14,10 @@ collabRoutes.get('/get-all', async (req, res) => {
     const collabUsers = await db('users')
       .select("*")
       .where('collab', '=', 'true')
+    const allUsers = await db('users')
+      .select('*')
 
-    res.status(200).json({ collabUsers: collabUsers })
+    res.status(200).json({ collabUsers: collabUsers, allUsers: allUsers })
   } catch (err) {
     console.error(`Error getting collab users from db: ${err}`)
   }
@@ -90,54 +92,52 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
         music: req.body.music,
         notes: req.body.notes
       })
-if (updatedCollab){
-  res.status(200).json({ message: 'updated collab!' })
-} else {
-  try {
-    await db('collab')
-      .insert({
-        user_id: req.body.user_id,
-        partner_id: req.body.partner_id,
-        feed_id: req.body.feed_id,
-        title: req.body.title,
-        lyrics: req.body.lyrics,
-        music: req.body.music,
-        notes: req.body.notes
-      })
-res.status(200).json({ message: 'inserted new collab!' })
+    if (updatedCollab) {
+      res.status(200).json({ message: 'updated collab!' })
+    } else {
+      try {
+        await db('collab')
+          .insert({
+            user_id: req.body.user_id,
+            partner_id: req.body.partner_id,
+            feed_id: req.body.feed_id,
+            title: req.body.title,
+            lyrics: req.body.lyrics,
+            music: req.body.music,
+            notes: req.body.notes
+          })
+        res.status(200).json({ message: 'inserted new collab!' })
+      }
+      catch (err) {
+        console.error(`Error inserting new collab: ${err}`)
+      }
     }
-catch (err) {
-  console.error(`Error inserting new collab: ${err}`)
-    }
+  } catch (err) {
+    console.error(`Error updating collab db: ${err}`)
   }
-}catch (err) {
-  console.error(`Error updating collab db: ${err}`)
-}})
+})
 
-collabRoutes.get('/get-profile-collabs', async(req, res) => {
-  let user_id = '';
-    if (req.cookies.user) {
-       user_id = req.cookies.user.user_id;
-    }
-    try {
-
-      const userCollabs = await db('collab').select("*")
+collabRoutes.get('/get-profile-collabs', async (req, res) => {
+  try {
+    const user_id = req.cookies.user.user_id
+    const userCollabs = await db('collab').select("*")
       .where('collab.user_id', user_id).orWhere('collab.partner_id', user_id)
       .innerJoin('feed', 'collab.feed_id', 'feed.feed_id')
-  
-      for (const song of userCollabs) {
-        if (song.music_id) {
-          const url = await db('music').where('music_id', song.music_id).select('song_file')
-          song.music = url[0].song_file
-        }
-          const username = await db('users').where('user_id', song.user_id)
-          song.username = username[0].username
+
+    for (const song of userCollabs) {
+      if (song.music_id) {
+        const url = await db('music').where('music_id', song.music_id).select('song_file')
+        song.music = url[0].song_file
       }
-  
-      res.status(200).json({userCollabs: userCollabs})
-    } catch(err) {
-      console.error(`error getting profile Collabs from db: ${err}`)
+      const username = await db('users').where('user_id', song.user_id)
+      song.username = username[0].username
+      console.log(song);
     }
-  })
+
+    res.status(200).json({ userCollabs: userCollabs })
+  } catch (err) {
+    console.error(`Error Getting userCollabs from db: ${err}`)
+  }
+})
 
 export default collabRoutes
