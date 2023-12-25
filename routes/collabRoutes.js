@@ -36,13 +36,13 @@ collabRoutes.get('/collab-status', (req, res) => {
 
 collabRoutes.put('/update-collab', async (req, res) => {
   const { id } = req.body
-  console.log('cookie: ', req.cookies.user)
+  // console.log('cookie: ', req.cookies.user)
   let nextCollab = ''
   try {
     const currentCollab = await db('users')
       .where('user_id', id)
       .select('collab')
-    console.log('currentCollab: ', currentCollab);
+    // console.log('currentCollab: ', currentCollab);
     if (currentCollab[0].collab === "false") {
       await db('users')
         .where('user_id', id)
@@ -62,7 +62,7 @@ collabRoutes.put('/update-collab', async (req, res) => {
     }
     res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
     res.status(200).json({ nextCollab: nextCollab });
-    console.log('this: ', req.cookies.user)
+    // console.log('this: ', req.cookies.user)
   } catch (err) {
     console.error(`Trouble setting collab boolean in db: ${err}`)
   }
@@ -131,7 +131,7 @@ collabRoutes.get('/get-profile-collabs', async (req, res) => {
       }
       const username = await db('users').where('user_id', song.user_id)
       song.username = username[0].username
-      console.log(song);
+      // console.log(song);
     }
 
     res.status(200).json({ userCollabs: userCollabs })
@@ -140,35 +140,54 @@ collabRoutes.get('/get-profile-collabs', async (req, res) => {
   }
 })
 
-collabRoutes.post('/finalize', async(req, res) => {
-  if (typeof req.body.song_file === 'number'){
+collabRoutes.post('/finalize', async (req, res) => {
+  let databaseLink = req.body.song_file
+
+  if (typeof databaseLink === 'number') {
     try {
       const databaseInfo = await db('music').select('song_file').where('music_id', req.body.song_file)
-      const databaseLink = databaseInfo[0].song_file
-      //// 
-      /////
-      ///    *** THIS IS WHERE I LEFT OFF AS WELL AS NEXT ROUTE AND DELETE
+      databaseLink = databaseInfo[0].song_file
+      // console.log(databaseLink);
     } catch (err) {
       console.err(`Error with song_file int replacer: ${err}`)
     }
-
   }
   try {
-    console.log(req.body);
-    res.status(200).json({message: 'hell yea'})
+    await db.transaction(async trx => {
+      const partnerData = await db('users').select('username')
+        .where('user_id', req.body.partner_id)
+      const partner_username = partnerData[0].username
+
+      const songData = await trx('songs')
+        .insert({
+          user_id: req.body.user_id,
+          partner_username: partner_username,
+          title: req.body.title,
+          lyrics: req.body.lyrics,
+          song_file: databaseLink,
+          votes: 0
+        }).returning('song_id')
+        const song_id = songData[0].song_id
+      await trx('feed')
+      .insert({
+        type: "collab",
+        user_id: req.body.user_id,
+        partner_username: partner_username,
+        song_id: song_id
+      })
+
+      await trx('collab')
+        .where('title', req.body.title)
+        .where('user_id', req.body.user_id)
+        .del();
+    })
+    res.status(200).json({ message: `${req.body.title} posted to feed, and deleted from collab table` })
   } catch (err) {
-    console.error(`Error loading new final Collab Song: ${err}`)
-    
+    console.error(`Error inserting song or deleting collab: ${err}`)
+    res.status(500).json({error: "Internal Service Errororrooror"})
   }
 })
 
-collabRoutes.delete('/cleanup', async(req, res) => {
-  try {
-    await db('collab').select("*").where('collab_id', req.body.collab_id).del();
-    res.status(200).json({message: 'successsss'})
-  } catch (err) {
-    console.error(`Error Deleting Collab After Song Posted: ${err}`)
-  }
-})
+
 
 export default collabRoutes
