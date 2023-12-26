@@ -61,7 +61,7 @@ const createSharedLink = async(req) => {
 
 songRoutes.post('/submit-song', upload.single('song'), async (req, res) => {
   const databaseLink = await createSharedLink(req);
-  console.log('databaseLink: ', databaseLink)
+
   try {
     const [newSongId] = await db('songs')
       .insert({
@@ -77,6 +77,53 @@ songRoutes.post('/submit-song', upload.single('song'), async (req, res) => {
       user_id: req.body.user_id,
       song_id: newSongId.song_id
     })
+
+    const usersWhoHaveSubmitted = await db('scoreboard')
+      .select('user_id')
+      .distinct()
+      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+
+      const hasSubmitted = await db('scoreboard')
+      .where('user_id', req.body.user_id)
+      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+
+      if (hasSubmitted.length === 0) {
+        for (const user of usersWhoHaveSubmitted){
+          await db('scoreboard')
+          .insert({
+            user_id: user.user_id,
+            type: 'bonus',
+            amount: 10
+          })
+          const userAmountData = await db('scoreboard')
+        .where('user_id', user.user_id)
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .sum('amount')
+        const userScore = userAmountData[0].sum
+          await db('users')
+          .where('user_id', user.user_id)
+          .update('score', userScore)
+        }
+      }
+    
+    await db('scoreboard')
+    .insert({
+      user_id: req.body.user_id,
+      type: 'song',
+      amount: 50
+    })
+
+    const userAmountData = await db('scoreboard')
+    .where('user_id', req.body.user_id)
+    .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+    .sum('amount')
+
+    const userScore = userAmountData[0].sum
+
+    await db('users')
+    .where('user_id', req.body.user_id)
+    .update('score', userScore)
+
     res.status(200).json({ newSong: databaseLink })
   }
   catch (error) {

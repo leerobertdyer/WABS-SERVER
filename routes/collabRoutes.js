@@ -167,14 +167,80 @@ collabRoutes.post('/finalize', async (req, res) => {
           song_file: databaseLink,
           votes: 0
         }).returning('song_id')
-        const song_id = songData[0].song_id
+      const song_id = songData[0].song_id
       await trx('feed')
-      .insert({
-        type: "collab",
-        user_id: req.body.user_id,
-        partner_username: partner_username,
-        song_id: song_id
-      })
+        .insert({
+          type: "collab",
+          user_id: req.body.user_id,
+          partner_username: partner_username,
+          song_id: song_id
+        })
+
+      const usersWhoHaveSubmitted = await db('scoreboard')
+      .select('user_id')
+      .distinct()
+      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+
+      const hasSubmitted = await db('scoreboard')
+      .where('user_id', req.body.user_id)
+      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+
+      if (hasSubmitted.length === 0) {
+        for (const user of usersWhoHaveSubmitted){
+          await db('scoreboard')
+          .insert({
+            user_id: user.user_id,
+            type: 'bonus',
+            amount: 10
+          })
+          const userAmountData = await db('scoreboard')
+        .where('user_id', user.user_id)
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .sum('amount')
+        const userScore = userAmountData[0].sum
+          await db('users')
+          .where('user_id', user.user_id)
+          .update('score', userScore)
+        }
+      }
+
+      await trx('scoreboard')
+        .insert({
+          user_id: req.body.user_id,
+          type: 'collab',
+          amount: 100
+        })
+
+      await trx('scoreboard')
+        .insert({
+          user_id: req.body.partner_id,
+          type: 'collab',
+          amount: 100
+        })
+
+      const userAmountData = await db('scoreboard')
+        .where('user_id', req.body.user_id)
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .sum('amount')
+
+      const partnerAmountData = await db('scoreboard')
+        .where('user_id', req.body.partner_id)
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .sum('amount')
+
+      const userScore = userAmountData[0].sum
+      console.log('userScore Collab: ', userScore);
+
+      const partnerScore = partnerAmountData[0].sum
+      console.log('partnerScore Collab: ', partnerScore);
+
+      await trx('users')
+        .where('user_id', req.body.user_id)
+        .update('score', userScore)
+
+      await trx('users')
+        .where('user_id', req.body.partner_id)
+        .update('score', partnerScore)
 
       await trx('collab')
         .where('title', req.body.title)
@@ -184,7 +250,7 @@ collabRoutes.post('/finalize', async (req, res) => {
     res.status(200).json({ message: `${req.body.title} posted to feed, and deleted from collab table` })
   } catch (err) {
     console.error(`Error inserting song or deleting collab: ${err}`)
-    res.status(500).json({error: "Internal Service Errororrooror"})
+    res.status(500).json({ error: "Internal Service Errororrooror" })
   }
 })
 

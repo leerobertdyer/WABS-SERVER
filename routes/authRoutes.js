@@ -129,7 +129,6 @@ authRoutes.post('/login', (req, res) => {
             user_email: email,
             username: username,
             date_user_joined: new Date(),
-            score: 0,
             user_status: 'New in town...',
             user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0'
           })
