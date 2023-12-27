@@ -2,6 +2,7 @@ import { Router } from "express";
 import dbConfig from '../database/db.js'
 const { db } = dbConfig
 import dropboxConfig from '../services/dropbox.js'
+import { authenticate } from "./authRoutes.js";
 const { dbx, isAccessTokenValid, refreshToken } = dropboxConfig
 import multer from 'multer';
 const storage = multer.memoryStorage();
@@ -58,10 +59,10 @@ const getDatabaseLink = async(req) => {
 }
 }
 
-profileRoutes.put('/update-status', async (req, res) => {
+profileRoutes.put('/update-status', authenticate, async (req, res) => {
   try {
+    console.log(req.user);
     const { id, newStatus } = req.body
-    req.cookies.user.user_status = newStatus
     await db('users')
       .where('user_id', id)
       .update({ user_status: newStatus })
@@ -72,7 +73,6 @@ profileRoutes.put('/update-status', async (req, res) => {
           user_id: id,
           feed_status: newStatus
         })
-    res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
     res.status(200).json({ status: newStatus })
   } catch (error) {
     console.error('Error setting new status in Database', error);

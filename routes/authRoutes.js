@@ -8,7 +8,7 @@ const authRoutes = Router()
 import { dbf } from '../index.js'
 import admin from 'firebase-admin';
 
-export const authenticate = async (req, res, next) => {
+ export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -17,6 +17,10 @@ export const authenticate = async (req, res, next) => {
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.uid = decodedToken.uid;
+    const userData = await db('users')
+    .where('uid', req.uid)
+    .select('*')
+    req.user = userData[0]
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -36,7 +40,7 @@ authRoutes.get('/check-session', authenticate, async(req, res) => {
   userId = user.user_id
   res.status(200).json({user: user})
   } else {
-    console.log('no cookie');
+    console.log('no user');
     res.status(204); //need to respond better so there is no error on a guest load
   }
 });
@@ -45,7 +49,7 @@ authRoutes.get('/check-session', authenticate, async(req, res) => {
 authRoutes.post('/dbx-auth', authenticate, async (req, res) => {
     try {
       const authUrl = await dbx.auth.getAuthenticationUrl(REDIRECT_URI, null, 'code', 'offline', null, 'none', false);
-      console.log('Authorization URL:', authUrl);
+      // console.log('Authorization URL:', authUrl);
       res.json({ authUrl: authUrl })
     } catch (error) {
       console.error('Error generating authentication URL:', error);

@@ -5,7 +5,7 @@ const { db } = databaseConfig
 import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
+import { authenticate } from './authRoutes.js';
 
 const collabRoutes = Router();
 
@@ -23,11 +23,12 @@ collabRoutes.get('/get-all', async (req, res) => {
   }
 })
 
-collabRoutes.get('/collab-status', (req, res) => {
+collabRoutes.get('/collab-status', authenticate, (req, res) => {
   try {
-    const user = req.cookies.user
-    if (user.collab === 'true') {
-      res.status(200).json({ collab: user.collab })
+    if (req.user.collab === 'true') {
+      res.status(200).json({ collab: req.user.collab })
+    } else if (req.user.collab === 'false') {
+      res.status(200).json({ collab: req.user.collab})
     }
   } catch (err) {
     console.error(`Must be signed in: ${err}`)
@@ -36,13 +37,11 @@ collabRoutes.get('/collab-status', (req, res) => {
 
 collabRoutes.put('/update-collab', async (req, res) => {
   const { id } = req.body
-  // console.log('cookie: ', req.cookies.user)
   let nextCollab = ''
   try {
     const currentCollab = await db('users')
       .where('user_id', id)
       .select('collab')
-    // console.log('currentCollab: ', currentCollab);
     if (currentCollab[0].collab === "false") {
       await db('users')
         .where('user_id', id)
@@ -50,7 +49,6 @@ collabRoutes.put('/update-collab', async (req, res) => {
           collab: 'true'
         })
       nextCollab = 'true'
-      req.cookies.user.collab = 'true'
     } else {
       await db('users')
         .where('user_id', id)
@@ -58,16 +56,12 @@ collabRoutes.put('/update-collab', async (req, res) => {
           collab: 'false'
         })
       nextCollab = 'false'
-      req.cookies.user.collab = 'false'
     }
-    res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
     res.status(200).json({ nextCollab: nextCollab });
-    // console.log('this: ', req.cookies.user)
   } catch (err) {
     console.error(`Trouble setting collab boolean in db: ${err}`)
   }
 })
-
 
 collabRoutes.put('/submit-collab-music', upload.single('music'), async (req, res) => {
   try {
@@ -117,9 +111,9 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
   }
 })
 
-collabRoutes.get('/get-profile-collabs', async (req, res) => {
+collabRoutes.get('/get-profile-collabs', authenticate, async (req, res) => {
   try {
-    const user_id = req.cookies.user.user_id
+    const user_id = req.user.user_id
     const userCollabs = await db('collab').select("*")
       .where('collab.user_id', user_id).orWhere('collab.partner_id', user_id)
       .innerJoin('feed', 'collab.feed_id', 'feed.feed_id')
