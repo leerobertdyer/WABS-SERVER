@@ -5,12 +5,14 @@ import dropboxConfig from '../services/dropbox.js'
 const { dbx, REDIRECT_URI, isAccessTokenValid, refreshToken } = dropboxConfig
 const { db } = databaseConfig
 const authRoutes = Router()
+import { dbf } from '../index.js'
 
 ////////////////    session    ////////////////
 authRoutes.get('/check-session', (req, res) => {
-  if (req.cookies.user){
-    // console.log('check-session Cookie = ', req.cookies.user, req.cookies.token);
-    res.status(200).json({ user: req.cookies.user, token: req.cookies.token  });
+  if (req.body){ 
+console.log(req.body);
+// save req.body.UID to a temp variable to use in next route
+    res.status(200)
   } else {
     console.log('no cookie');
     res.status(204); //need to respond better so there is no error on a guest load
