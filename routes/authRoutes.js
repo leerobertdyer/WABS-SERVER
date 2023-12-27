@@ -33,8 +33,11 @@ let tempAuthToken = ''
 
 authRoutes.get('/dbx-auth-callback', async (req, res) => {
   const { code } = req.query;
-  console.log('auth callback cookie: ', req.cookies.user)
-  const userId = req.cookies.user.user_id
+  try {
+    
+  } catch (err) {
+    console.error(`error reloading user after dbx auth: ${err}`)
+  }
   try {
     console.log('received auth code: ', code)
     if (tempAuthToken === '') {
@@ -111,50 +114,30 @@ authRoutes.post('/login', (req, res) => {
 
 ////////////////    Register    ////////////////
 
-  authRoutes.post('/register', (req, res) => {
-    const { email, username, password } = req.body;
-    console.log(email, username, password);
-    if (!email || !username || !password) {
-      return res.status(400).json('Missing email, username, or password...')
-    }
-  
-    bcrypt.hash(password, 10, (err, hash) => {
-      if (err) {
-        console.log('Error hashing password', err);
-      }
-      db.transaction((trx) => {
-        trx('users')
-          .returning('*')
-          .insert({
-            user_email: email,
-            username: username,
-            date_user_joined: new Date(),
-            user_status: 'New in town...',
-            user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0'
-          })
-          .then((user) => {
-            const userData = user[0];
-            const userId = user[0].user_id;
-            return trx('login')
-              .returning('*')
-              .insert({
-                hash: hash,
-                user_id: userId,
-              })
-              .then((user) => {
-                trx.commit();
-                res.cookie('user', userData, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
-                res.json(userData);
-              });
-          })
-          .catch((err) => {
-            trx.rollback();
+  authRoutes.post('/register', async(req, res) => {
+    const { username, UID, email } = req.body;
+    console.log(username, UID);
+
+   try {
+     const user = await db('users')
+         .returning("*")
+         .insert({
+           username: username,
+           uid: UID,
+           user_email: email,
+           date_user_joined: new Date(),
+           user_status: 'New in town...',
+           user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0'
+         })
+           const userData = user[0];
+               res.json(userData);
+   }
+          catch(err) {
+            console.error(`Error with new register: ${err}`)
             res.status(400).json({ error: 'Unable to register1', message: err.message });
-          });
+          }
       })
   
-    });
-  });
 
 ////////////////    Signout    ////////////////
 

@@ -7,6 +7,11 @@ import dbConfig from './database/db.js'
 import cookieParser from 'cookie-parser';
 import feedRoutes from './routes/feedRoutes.js';
 import collabRoutes from './routes/collabRoutes.js'
+import { initializeApp } from 'firebase-admin/app';
+import * as admin from 'firebase-admin';
+
+const fireBaseApp = admin.initializeApp();
+
 
 const { db } = dbConfig
 const server = express();
