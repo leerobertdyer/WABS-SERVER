@@ -16,18 +16,20 @@ const { db } = dbConfig
 const server = express();
 const port = 4000;
 
-/////////// Middleware ////////////
-server.use(express.json());
 
+/////////// Middleware ////////////
 const corsOptions = {
   origin: [process.env.REACT_APP_FRONTEND_URL, `${process.env.REACT_APP_FRONTEND_URL}/`],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
 };
-
 server.use(cors(corsOptions));
+
+server.use(express.json());
 server.use(cookieParser(process.env.COOKIE_SECRET, { sameSite: 'None', secure: true, domain: '.writeabadsong.com' })); 
+
+
 
             //////ROUTES//////
 server.use('/profile', profileRoutes)

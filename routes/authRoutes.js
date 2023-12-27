@@ -6,13 +6,35 @@ const { dbx, REDIRECT_URI, isAccessTokenValid, refreshToken } = dropboxConfig
 const { db } = databaseConfig
 const authRoutes = Router()
 import { dbf } from '../index.js'
+import admin from 'firebase-admin';
+
+export const authenticate = async (req, res, next) => {
+  const headerToken = req.headers.authorization;
+  if (!headerToken || !headerToken.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const token = headerToken.split('Bearer ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.uid = decodedToken.uid;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
+let userId
 
 ////////////////    session    ////////////////
-authRoutes.get('/check-session', (req, res) => {
-  if (req.body){ 
-console.log(req.body);
-// save req.body.UID to a temp variable to use in next route
-    res.status(200)
+authRoutes.get('/check-session', authenticate, async(req, res) => {
+  if(req.headers) {
+  const token = req.headers.authorization.split('Bearer ')[1];
+  const decodedToken = await admin.auth().verifyIdToken(token);
+  const uid = decodedToken.uid; 
+  const userData = await db('users').where('uid', uid).select('*')
+  const user = userData[0]
+  userId = user.user_id
+  res.status(200).json({user: user})
   } else {
     console.log('no cookie');
     res.status(204); //need to respond better so there is no error on a guest load
@@ -20,7 +42,7 @@ console.log(req.body);
 });
 ////////////////    DBX    ////////////////
 
-authRoutes.post('/dbx-auth', async (req, res) => {
+authRoutes.post('/dbx-auth', authenticate, async (req, res) => {
     try {
       const authUrl = await dbx.auth.getAuthenticationUrl(REDIRECT_URI, null, 'code', 'offline', null, 'none', false);
       console.log('Authorization URL:', authUrl);
@@ -35,11 +57,7 @@ let tempAuthToken = ''
 
 authRoutes.get('/dbx-auth-callback', async (req, res) => {
   const { code } = req.query;
-  try {
-    
-  } catch (err) {
-    console.error(`error reloading user after dbx auth: ${err}`)
-  }
+
   try {
     console.log('received auth code: ', code)
     if (tempAuthToken === '') {
@@ -132,6 +150,7 @@ authRoutes.post('/login', (req, res) => {
            user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0'
          })
            const userData = user[0];
+           userId=userData.user_id
                res.json(userData);
    }
           catch(err) {
