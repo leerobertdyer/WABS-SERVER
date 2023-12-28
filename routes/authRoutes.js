@@ -77,7 +77,6 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
         token: tempAuthToken,
         refresh: refreshToken
       })
-      res.cookie('token', tempAuthToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
       tempAuthToken = ''
       res.redirect(process.env.REACT_APP_FRONTEND_URL)
     }

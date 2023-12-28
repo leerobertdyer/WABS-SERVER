@@ -9,32 +9,22 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const createSharedLink = async(req) => {
-  let token = req.cookies.token
-  const user = req.cookies.user
-  // console.log('server user cookie: ', user)
-  // console.log('server token cookie: ', token)
+  const user = req.body.user_id
+  let token = await db('dbx_tokens')
+  .where('user_id', user) 
+  token = token[0].token
   if (!(await isAccessTokenValid(token))) {
-    // console.log('expired, sending 4 new token')
-    token = await refreshToken(user.user_id, token);
-    // console.log(token) //fucking test bro
+    token = await refreshToken(user, token);
   }
   await dbx.auth.setAccessToken(token)
-
   const uploadedSong = req.file;
-  // console.log('uploadedSong: ', uploadedSong)
-
   const content = uploadedSong.buffer;
-
   let databaseLink;
-  
   const dropboxResponse = await dbx.filesUpload({
     path: `/uploads/songs/${uploadedSong.originalname}`,
     contents: content
   });
-  // console.log('dpx resp: ', dropboxResponse);
   const dropboxPath = dropboxResponse.result.id;
-  // console.log('dpx path: ', dropboxPath)
-
   try {
     const existingLinkResponse = await dbx.sharingListSharedLinks({
       path: dropboxResponse.result.path_display
@@ -42,7 +32,6 @@ const createSharedLink = async(req) => {
 
     if (existingLinkResponse.result.links.length > 0) {
       databaseLink = existingLinkResponse.result.links[0].url.replace('https://www.dropbox.com', 'https://dl.dropboxusercontent.com');
-      // console.log('Using existing shareable link:', databaseLink);
       return databaseLink
     } else {
       const linkResponse = await dbx.sharingCreateSharedLinkWithSettings({
@@ -51,7 +40,6 @@ const createSharedLink = async(req) => {
       });
 
       databaseLink = linkResponse.result.url.replace('https://www.dropbox.com', 'https://dl.dropboxusercontent.com');
-      // console.log('Shareable link:', databaseLink);
       return databaseLink
     }
   } catch (error) {

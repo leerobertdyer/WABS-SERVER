@@ -16,12 +16,23 @@ const dbx = new Dropbox({ clientId: APP_KEY, clientSecret: APP_SECRET, fetch });
 const isAccessTokenValid = async (accessToken) => {
     try {
         const dbxClient = new Dropbox({ clientId: APP_KEY, clientSecret: APP_SECRET, accessToken: accessToken });
-        const accountInfo = await axios.post('https://api.dropboxapi.com/2/check/user', headers={
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": 'application/json'
-        })
-        console.log(accountInfo)
-        return true;
+        const resp = await fetch('https://api.dropboxapi.com/2/check/user', {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+        if (resp.ok) {
+            console.log('Token Valid, returning TRUE');
+            return true;
+        } else {
+            console.error(`error getting account info: ${resp.status}`);
+            console.log('Response Headers:', resp.headers);
+            console.log('Response Text:', await resp.text());
+            return false
+        }
     } catch (error) {
         console.error(`Token has expired, getting new one... ${error}`);
         return false;
@@ -49,7 +60,7 @@ const refreshToken = async (user_id, token) => {
                 params.append('refresh_token', refresh);
                 params.append('client_id', process.env.DROPBOX_APP_KEY);
                 params.append('client_secret', process.env.DROPBOX_APP_SECRET);
-        
+
                 const response = await axios.post(
                     'https://api.dropboxapi.com/oauth2/token',
                     params.toString(),
@@ -59,7 +70,7 @@ const refreshToken = async (user_id, token) => {
                         },
                     }
                 );
-        
+
                 // console.log('New Access Token:', response.data.access_token);
                 const newToken = response.data.access_token
                 return newToken
@@ -67,7 +78,7 @@ const refreshToken = async (user_id, token) => {
                 console.error('Error refreshing token:', error.response.data);
             }
         }
-        
+
         const newAccessToken = await getNewAccessToken();
 
         await db('dbx_tokens')

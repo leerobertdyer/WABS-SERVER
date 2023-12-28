@@ -11,14 +11,17 @@ const upload = multer({ storage: storage });
 const profileRoutes = Router()
 
 const getDatabaseLink = async(req) => {
-  let token = req.cookies.token
   const user = req.body.user_id;
-  if (!(await isAccessTokenValid(token))) {
+  const dbxTokenData = await db('dbx_tokens')
+  .where('user_id', user)
+  .select('token')
+  let dbxToken = dbxTokenData[0]
+  if (!(await isAccessTokenValid(dbxToken))) {
     console.log('Fix isAccessTokenValid, sending 4 new token')
-    token = await refreshToken(user, token);
+    dbxToken = await refreshToken(user, dbxToken);
   }
 
-  await dbx.auth.setAccessToken(token);
+  await dbx.auth.setAccessToken(dbxToken);
   const uploadedPhoto = req.file;
 
   if (!uploadedPhoto) {
@@ -93,8 +96,6 @@ profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res
        user_id: user,
        feed_pic: databaseLink
      })
-   req.cookies.user.user_profile_pic = databaseLink
-   res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
    res.status(200).json({ newPhoto: databaseLink })
  } catch (error) {
     console.error('Error updating Database: ', error);
@@ -115,8 +116,6 @@ profileRoutes.put('/upload-background-pic', upload.single('photo'), async (req, 
       user_id: user,
       feed_pic: databaseLink
     })
-    req.cookies.user.profile_background = databaseLink;
-   res.cookie('user', req.cookies.user, { maxAge: 3000000, path: '/', sameSite: 'none', secure: true });
    res.status(200).json({ newPhoto: databaseLink })
   } catch(err) {
     console.error(`Error uploading new Background to db: ${err}`)
