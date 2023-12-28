@@ -12,7 +12,7 @@ import admin from 'firebase-admin';
 
 let serviceAccount
 if (process.env.RENDER) {
-   serviceAccount = `/etc/secrets/GOOGLE_APPLICATION_CREDENTIALS.json`;
+   serviceAccount = `/project/src/GOOGLE_APPLICATION_CREDENTIALS`;
 } else {
   serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 }
