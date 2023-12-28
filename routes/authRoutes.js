@@ -5,14 +5,12 @@ import dropboxConfig from '../services/dropbox.js'
 const { dbx, REDIRECT_URI, isAccessTokenValid, refreshToken } = dropboxConfig
 const { db } = databaseConfig
 const authRoutes = Router()
-import { dbf } from '../index.js'
 import admin from 'firebase-admin';
+
 
  export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
-  console.log('headerToken in authenticat: ', headerToken);
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
-    console.log('inside if statement...');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const token = headerToken.split('Bearer ')[1];

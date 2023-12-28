@@ -8,8 +8,13 @@ import cookieParser from 'cookie-parser';
 import feedRoutes from './routes/feedRoutes.js';
 import collabRoutes from './routes/collabRoutes.js'
 import admin from 'firebase-admin';
+import pkg from 'firebase-admin';
+const { credential } = pkg;
 
-const fireBaseApp = admin.initializeApp();
+const fireBaseApp = admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+});
+
 export const dbf = admin.firestore();
 
 const { db } = dbConfig
