@@ -8,14 +8,24 @@ import cookieParser from 'cookie-parser';
 import feedRoutes from './routes/feedRoutes.js';
 import collabRoutes from './routes/collabRoutes.js'
 import admin from 'firebase-admin';
-import pkg from 'firebase-admin';
-const { credential } = pkg;
 
-const fireBaseApp = admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+
+let serviceAccount
+if (process.env.RENDER) {
+   serviceAccount = `/etc/secrets/GOOGLE_APPLICATION_CREDENTIALS.json`;
+} else {
+  serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+}
+
+const credential = admin.credential.cert(serviceAccount);
+
+const firebaseApp = admin.initializeApp({
+    credential,
+    databaseURL: "https://<your-project-id>.firebaseio.com" // Optional if using Firestore
 });
 
 export const dbf = admin.firestore();
+
 
 const { db } = dbConfig
 const server = express();

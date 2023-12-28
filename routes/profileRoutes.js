@@ -17,7 +17,6 @@ const getDatabaseLink = async(req) => {
   .select('token')
   let dbxToken = dbxTokenData[0]
   if (!(await isAccessTokenValid(dbxToken))) {
-    console.log('Fix isAccessTokenValid, sending 4 new token')
     dbxToken = await refreshToken(user, dbxToken);
   }
 
