@@ -28,7 +28,7 @@ collabRoutes.get('/collab-status', authenticate, (req, res) => {
     if (req.user.collab === 'true') {
       res.status(200).json({ collab: req.user.collab })
     } else if (req.user.collab === 'false') {
-      res.status(200).json({ collab: req.user.collab})
+      res.status(200).json({ collab: req.user.collab })
     }
   } catch (err) {
     console.error(`Must be signed in: ${err}`)
@@ -136,7 +136,7 @@ collabRoutes.get('/get-profile-collabs', authenticate, async (req, res) => {
 
 collabRoutes.post('/finalize', async (req, res) => {
   let databaseLink = req.body.song_file
-
+  console.log(req.body);
   if (typeof databaseLink === 'number') {
     try {
       const databaseInfo = await db('music').select('song_file').where('music_id', req.body.song_file)
@@ -171,30 +171,31 @@ collabRoutes.post('/finalize', async (req, res) => {
         })
 
       const usersWhoHaveSubmitted = await db('scoreboard')
-      .select('user_id')
-      .distinct()
-      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .select('user_id')
+        .distinct()
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
 
       const hasSubmitted = await db('scoreboard')
-      .where('user_id', req.body.user_id)
-      .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+        .where('user_id', req.body.user_id)
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
 
       if (hasSubmitted.length === 0) {
-        for (const user of usersWhoHaveSubmitted){
+        for (const user of usersWhoHaveSubmitted) {
+          console.log(`${user.username} has submitted this month`);
           await db('scoreboard')
-          .insert({
-            user_id: user.user_id,
-            type: 'bonus',
-            amount: 10
-          })
+            .insert({
+              user_id: user.user_id,
+              type: 'bonus',
+              amount: 10
+            })
           const userAmountData = await db('scoreboard')
-        .where('user_id', user.user_id)
-        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
-        .sum('amount')
-        const userScore = userAmountData[0].sum
+            .where('user_id', user.user_id)
+            .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+            .sum('amount')
+          const userScore = userAmountData[0].sum
           await db('users')
-          .where('user_id', user.user_id)
-          .update('score', userScore)
+            .where('user_id', user.user_id)
+            .update('score', userScore)
         }
       }
 
@@ -216,11 +217,13 @@ collabRoutes.post('/finalize', async (req, res) => {
         .where('user_id', req.body.user_id)
         .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
         .sum('amount')
+        console.log('userAmountData: ', userAmountData);
 
       const partnerAmountData = await db('scoreboard')
         .where('user_id', req.body.partner_id)
         .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
         .sum('amount')
+      console.log('partnerAmountData: ', partnerAmountData);
 
       const userScore = userAmountData[0].sum
       console.log('userScore Collab: ', userScore);

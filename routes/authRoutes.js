@@ -163,14 +163,7 @@ authRoutes.post('/login', (req, res) => {
       })
   
 
-////////////////    Signout    ////////////////
 
-  authRoutes.post('/signout', (req, res) => {
-    res.clearCookie('user'); 
-    res.clearCookie('token')
-    res.status(204).send(); 
-  });
-  
 
   export default authRoutes 
   
