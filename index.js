@@ -20,8 +20,7 @@ if (process.env.RENDER) {
 const credential = admin.credential.cert(serviceAccount);
 
 const firebaseApp = admin.initializeApp({
-    credential,
-    databaseURL: "https://<your-project-id>.firebaseio.com" // Optional if using Firestore
+    credential
 });
 
 export const dbf = admin.firestore();
