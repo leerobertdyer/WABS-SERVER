@@ -10,7 +10,9 @@ import admin from 'firebase-admin';
 
  export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
+  console.log('headerToken in authenticat: ', headerToken);
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
+    console.log('inside if statement...');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const token = headerToken.split('Bearer ')[1];
@@ -23,6 +25,7 @@ import admin from 'firebase-admin';
     req.user = userData[0]
     next();
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ error: 'Unauthorized' });
   }
 };
