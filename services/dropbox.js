@@ -29,7 +29,7 @@ const isAccessTokenValid = async (accessToken) => {
             return true;
         } else {
             console.error(`error getting account info: ${resp.status}`);
-            console.log('Response Headers:', resp.headers);
+            console.log('Response Headers(dbx - isAccessTokenValid):', resp.headers);
             console.log('Response Text:', await resp.text());
             return false
         }

@@ -41,7 +41,7 @@ authRoutes.get('/check-session', authenticate, async(req, res) => {
   userId = user.user_id
   res.status(200).json({user: user})
   } else {
-    console.log('no user');
+    console.log('no user logged in');
     res.status(204); //need to respond better so there is no error on a guest load
   }
 });
@@ -79,7 +79,7 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
         refresh: refreshToken
       })
       tempAuthToken = ''
-      res.redirect(process.env.REACT_APP_FRONTEND_URL)
+      res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/profile`)
     }
   } catch (error) {
     console.error('Error obtaining access token:', error);
@@ -87,7 +87,7 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
   }
 });
 
-////////////////    login    ////////////////
+////////////////    OLD login    ////////////////
 
 authRoutes.post('/login', (req, res) => {
     const { email, password } = req.body;
@@ -136,11 +136,26 @@ authRoutes.post('/login', (req, res) => {
       });
   });
 
+
+authRoutes.get('/get-all-emails', async(req, res) => {
+  try {
+    const allUsersData = await db('users').select(['user_email', 'username'])
+    const allUsers = []
+    for (const user of allUsersData) {
+      allUsers.push(user.user_email)
+      allUsers.push(user.username)
+    }
+    res.status(200).json({allUsers: allUsers})
+  } catch (error) {
+    console.error(`Error fetching users from db: ${error}`)
+    res.status(500).json({error: "internal SERVER error"})
+  }
+})
+
 ////////////////    Register    ////////////////
 
   authRoutes.post('/register', async(req, res) => {
     const { username, UID, email } = req.body;
-    console.log(username, UID);
 
    try {
      const user = await db('users')
@@ -151,7 +166,8 @@ authRoutes.post('/login', (req, res) => {
            user_email: email,
            date_user_joined: new Date(),
            user_status: 'New in town...',
-           user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0'
+           user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0',
+           profile_background: 'https://dl.dropboxusercontent.com/scl/fi/fyvbbqbf8grhralhhqtvn/pianoBackground.jpg?rlkey=0xy5uflju0yc61sueajzz5dw7&dl=0'
          })
            const userData = user[0];
            userId=userData.user_id

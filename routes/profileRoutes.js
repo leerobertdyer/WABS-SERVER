@@ -10,11 +10,11 @@ const upload = multer({ storage: storage });
 
 const profileRoutes = Router()
 
-const getDatabaseLink = async(req) => {
+const getDatabaseLink = async (req) => {
   const user = req.body.user_id;
   const dbxTokenData = await db('dbx_tokens')
-  .where('user_id', user)
-  .select('token')
+    .where('user_id', user)
+    .select('token')
   let dbxToken = dbxTokenData[0]
   if (!(await isAccessTokenValid(dbxToken))) {
     dbxToken = await refreshToken(user, dbxToken);
@@ -56,14 +56,13 @@ const getDatabaseLink = async(req) => {
     } catch (error) {
       console.error('Error creating/shared link:', error);
     }
-} catch(err) {
-  console.error(`Error getting databaseLink: ${err}`)
-}
+  } catch (err) {
+    console.error(`Error getting databaseLink: ${err}`)
+  }
 }
 
 profileRoutes.put('/update-status', authenticate, async (req, res) => {
   try {
-    console.log(req.user);
     const { id, newStatus } = req.body
     await db('users')
       .where('user_id', id)
@@ -85,18 +84,18 @@ profileRoutes.put('/update-status', authenticate, async (req, res) => {
 profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res) => {
   const databaseLink = await getDatabaseLink(req);
   const user = req.body.user_id;
- try {
-   await db('users')
-     .where('user_id', user)
-     .update({ user_profile_pic: databaseLink })
-   await db('feed')
-     .insert({
-       type: 'profile_pic',
-       user_id: user,
-       feed_pic: databaseLink
-     })
-   res.status(200).json({ newPhoto: databaseLink })
- } catch (error) {
+  try {
+    await db('users')
+      .where('user_id', user)
+      .update({ user_profile_pic: databaseLink })
+    await db('feed')
+      .insert({
+        type: 'profile_pic',
+        user_id: user,
+        feed_pic: databaseLink
+      })
+    res.status(200).json({ newPhoto: databaseLink })
+  } catch (error) {
     console.error('Error updating Database: ', error);
     res.status(500).json({ error: 'Server XXXX Error' })
   }
@@ -107,18 +106,56 @@ profileRoutes.put('/upload-background-pic', upload.single('photo'), async (req, 
   const user = req.body.user_id;
   try {
     await db('users')
-    .where('user_id', user)
-    .update({profile_background: databaseLink})
+      .where('user_id', user)
+      .update({ profile_background: databaseLink })
     await db('feed')
-    .insert({
-      type: 'profile_background',
-      user_id: user,
-      feed_pic: databaseLink
-    })
-   res.status(200).json({ newPhoto: databaseLink })
-  } catch(err) {
+      .insert({
+        type: 'profile_background',
+        user_id: user,
+        feed_pic: databaseLink
+      })
+    res.status(200).json({ newPhoto: databaseLink })
+  } catch (err) {
     console.error(`Error uploading new Background to db: ${err}`)
   }
+})
+
+profileRoutes.get('/get-messages', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const messages = await db('messages').where('user_id', userId)
+    if (messages.length > 0) {
+      for (const message of messages) {
+        const sender = await db('users').where('user_id', message.sent_by).select("username")
+        console.log(sender);
+        message.sender = sender[0].username
+        console.log(message);
+      }
+      res.status(200).json({ messages: messages })
+    } else {
+      console.log('no messages found');
+      res.status(200).json({ messages: [] })
+    }
+  } catch (err) {
+    console.error(`Trouble getting messages from db: ${err}`)
+  }
+})
+
+profileRoutes.delete('/delete-message', async (req, res) => {
+  const user_id = req.body.user_id;
+  const message_id = req.body.note.message_id
+  console.log(user_id, message_id);
+  try {
+    await db('messages').where('user_id', user_id).where('message_id', message_id).del();
+    res.status(200)
+  } catch (error) {
+    console.error(`Error deleting message from db: ${error}`)
+    res.status(500).json({error: "internal SERVER error"})
+  } 
+})
+
+profileRoutes.put('/respond', async(req, res) => {
+  console.log(req.body);
 })
 
 
