@@ -8,7 +8,9 @@ import cookieParser from 'cookie-parser';
 import feedRoutes from './routes/feedRoutes.js';
 import collabRoutes from './routes/collabRoutes.js'
 import admin from 'firebase-admin';
-
+import messageRoutes from './routes/messageRoutes.js';
+import { createServer } from 'http'
+import io from './sockets.js';
 
 let serviceAccount
 if (process.env.RENDER) {
@@ -29,15 +31,14 @@ const firebaseApp = admin.initializeApp({
 
 export const dbf = admin.firestore();
 
-
 const { db } = dbConfig
+
 const server = express();
 const port = 4000;
 
-
 /////////// Middleware ////////////
 const corsOptions = {
-  origin: [process.env.REACT_APP_FRONTEND_URL, `${process.env.REACT_APP_FRONTEND_URL}/`],
+  origin: [process.env.REACT_APP_FRONTEND_URL, `${process.env.REACT_APP_FRONTEND_URL}/`, '/socket.io'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
@@ -48,20 +49,23 @@ server.use(express.json());
 server.use(cookieParser(process.env.COOKIE_SECRET, { sameSite: 'None', secure: true, domain: '.writeabadsong.com' })); 
 
 
+///////////   SOCKETS   ////////////
+const httpServer = createServer(server);
+io.attach(httpServer)
 
-            //////ROUTES//////
+
+            ///////////   ROUTES   ///////////
 server.use('/profile', profileRoutes)
 server.use('/', songRoutes)
 server.use('/auth', authRoutes)
 server.use('/', feedRoutes)
 server.use('/collab', collabRoutes)
+server.use('/messages', messageRoutes)
 
 process.on('exit', () => {
   db.destroy();
 });
 
-server.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-

@@ -24,7 +24,7 @@ import admin from 'firebase-admin';
     next();
   } catch (error) {
     console.log(error);
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authenticate Failed' });
   }
 };
 
@@ -89,52 +89,52 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
 
 ////////////////    OLD login    ////////////////
 
-authRoutes.post('/login', (req, res) => {
-    const { email, password } = req.body;
-    db.select('*')
-      .from('users')
-      .where('user_email', '=', email.toLowerCase())
-      .then(userData => {
-        if (userData.length === 0) {
-          return res.status(400).json('no email Creds Bro');
-        }
-        const user = userData[0];
-        return db.select('hash')
-          .from('login')
-          .where('user_id', '=', user.user_id)
-          .then(loginData => {
-            if (loginData.length === 0) {
-              return res.status(400).json('Insufficient Creds Bro, database err');
-            }
-            bcrypt.compare(password, loginData[0].hash, (err, result) => {
-              if (result) {
-                db.select('token')
-                .from('dbx_tokens')
-                .where('user_id', user.user_id)
-                .then(dbxTokenData => {
-                  const dbxToken = dbxTokenData.length > 0 
-                  ? dbxTokenData[0].token
-                  : null
+// authRoutes.post('/login', (req, res) => {
+//     const { email, password } = req.body;
+//     db.select('*')
+//       .from('users')
+//       .where('user_email', '=', email.toLowerCase())
+//       .then(userData => {
+//         if (userData.length === 0) {
+//           return res.status(400).json('no email Creds Bro');
+//         }
+//         const user = userData[0];
+//         return db.select('hash')
+//           .from('login')
+//           .where('user_id', '=', user.user_id)
+//           .then(loginData => {
+//             if (loginData.length === 0) {
+//               return res.status(400).json('Insufficient Creds Bro, database err');
+//             }
+//             bcrypt.compare(password, loginData[0].hash, (err, result) => {
+//               if (result) {
+//                 db.select('token')
+//                 .from('dbx_tokens')
+//                 .where('user_id', user.user_id)
+//                 .then(dbxTokenData => {
+//                   const dbxToken = dbxTokenData.length > 0 
+//                   ? dbxTokenData[0].token
+//                   : null
 
-                  res.cookie('user', userData[0], { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
-                  if (dbxToken) {
-                    res.cookie('token', dbxToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
-                  }
-                  // console.log('user logged in: ', userData[0])
-                  // console.log('user token generated: ', dbxToken)
-                  res.json(userData[0]);
-                })
-              } else {
-                res.status(400).json('Very Much Wrong Creds Bro');
-              }
-            });
-          });
-      })
-      .catch(err => {
-        console.log(err)
-        res.status(400).json({ error: 'Wrong Creds Bro', details: err });
-      });
-  });
+//                   res.cookie('user', userData[0], { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
+//                   if (dbxToken) {
+//                     res.cookie('token', dbxToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
+//                   }
+//                   // console.log('user logged in: ', userData[0])
+//                   // console.log('user token generated: ', dbxToken)
+//                   res.json(userData[0]);
+//                 })
+//               } else {
+//                 res.status(400).json('Very Much Wrong Creds Bro');
+//               }
+//             });
+//           });
+//       })
+//       .catch(err => {
+//         console.log(err)
+//         res.status(400).json({ error: 'Wrong Creds Bro', details: err });
+//       });
+//   });
 
 
 authRoutes.get('/get-all-emails', async(req, res) => {
@@ -178,9 +178,6 @@ authRoutes.get('/get-all-emails', async(req, res) => {
             res.status(400).json({ error: 'Unable to register1', message: err.message });
           }
       })
-  
-
-
 
   export default authRoutes 
   

@@ -7,6 +7,7 @@ const { dbx, isAccessTokenValid, refreshToken } = dropboxConfig
 import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+import io from "../sockets.js";
 
 const profileRoutes = Router()
 
@@ -74,6 +75,7 @@ profileRoutes.put('/update-status', authenticate, async (req, res) => {
           user_id: id,
           feed_status: newStatus
         })
+    io.emit('updateFeed')
     res.status(200).json({ status: newStatus })
   } catch (error) {
     console.error('Error setting new status in Database', error);
@@ -94,6 +96,7 @@ profileRoutes.put('/upload-profile-pic', upload.single('photo'), async (req, res
         user_id: user,
         feed_pic: databaseLink
       })
+    io.emit('updateFeed')
     res.status(200).json({ newPhoto: databaseLink })
   } catch (error) {
     console.error('Error updating Database: ', error);
@@ -114,49 +117,12 @@ profileRoutes.put('/upload-background-pic', upload.single('photo'), async (req, 
         user_id: user,
         feed_pic: databaseLink
       })
+    io.emit('updateFeed')
+
     res.status(200).json({ newPhoto: databaseLink })
   } catch (err) {
     console.error(`Error uploading new Background to db: ${err}`)
   }
 })
-
-profileRoutes.get('/get-messages', authenticate, async (req, res) => {
-  try {
-    const userId = req.user.user_id;
-    const messages = await db('messages').where('user_id', userId)
-    if (messages.length > 0) {
-      for (const message of messages) {
-        const sender = await db('users').where('user_id', message.sent_by).select("username")
-        console.log(sender);
-        message.sender = sender[0].username
-        console.log(message);
-      }
-      res.status(200).json({ messages: messages })
-    } else {
-      console.log('no messages found');
-      res.status(200).json({ messages: [] })
-    }
-  } catch (err) {
-    console.error(`Trouble getting messages from db: ${err}`)
-  }
-})
-
-profileRoutes.delete('/delete-message', async (req, res) => {
-  const user_id = req.body.user_id;
-  const message_id = req.body.note.message_id
-  console.log(user_id, message_id);
-  try {
-    await db('messages').where('user_id', user_id).where('message_id', message_id).del();
-    res.status(200)
-  } catch (error) {
-    console.error(`Error deleting message from db: ${error}`)
-    res.status(500).json({error: "internal SERVER error"})
-  } 
-})
-
-profileRoutes.put('/respond', async(req, res) => {
-  console.log(req.body);
-})
-
 
 export default profileRoutes

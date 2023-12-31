@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import databaseConfig from '../database/db.js'
 const { db } = databaseConfig
+import io from '../sockets.js';
 
 const feedRoutes = Router();
 
@@ -39,10 +40,12 @@ feedRoutes.put('/update-stars', async (req, res) => {
     if (existingStar) {
         await db('stars').where({ post_id: postId, user_id: userId }).del();
         await db('feed').where('feed_id', postId).decrement('stars', 1)
+        io.emit('updateFeed')
         res.status(200).json({ message: 'un-starred', post: postId })
     } else {
         await db('stars').insert({ post_id: postId, user_id: userId })
         await db('feed').where('feed_id', postId).increment('stars', 1)
+        io.emit('updateFeed')
         res.status(200).json({ message: 'starred', post: postId });
     }
 });
@@ -122,6 +125,7 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 .where('lyric_id', lyricId)
                 .delete()
             } 
+            io.emit('updateFeed')
             res.status(200).json({ message: `Post ${feed_id} deleted.` });
         } catch (err) {
             console.error(`Error deleting post: ${err}`)
