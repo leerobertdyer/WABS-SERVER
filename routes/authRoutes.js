@@ -87,55 +87,6 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
   }
 });
 
-////////////////    OLD login    ////////////////
-
-// authRoutes.post('/login', (req, res) => {
-//     const { email, password } = req.body;
-//     db.select('*')
-//       .from('users')
-//       .where('user_email', '=', email.toLowerCase())
-//       .then(userData => {
-//         if (userData.length === 0) {
-//           return res.status(400).json('no email Creds Bro');
-//         }
-//         const user = userData[0];
-//         return db.select('hash')
-//           .from('login')
-//           .where('user_id', '=', user.user_id)
-//           .then(loginData => {
-//             if (loginData.length === 0) {
-//               return res.status(400).json('Insufficient Creds Bro, database err');
-//             }
-//             bcrypt.compare(password, loginData[0].hash, (err, result) => {
-//               if (result) {
-//                 db.select('token')
-//                 .from('dbx_tokens')
-//                 .where('user_id', user.user_id)
-//                 .then(dbxTokenData => {
-//                   const dbxToken = dbxTokenData.length > 0 
-//                   ? dbxTokenData[0].token
-//                   : null
-
-//                   res.cookie('user', userData[0], { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
-//                   if (dbxToken) {
-//                     res.cookie('token', dbxToken, { maxAge: 30000000, path: '/', sameSite: 'none', secure: true });
-//                   }
-//                   // console.log('user logged in: ', userData[0])
-//                   // console.log('user token generated: ', dbxToken)
-//                   res.json(userData[0]);
-//                 })
-//               } else {
-//                 res.status(400).json('Very Much Wrong Creds Bro');
-//               }
-//             });
-//           });
-//       })
-//       .catch(err => {
-//         console.log(err)
-//         res.status(400).json({ error: 'Wrong Creds Bro', details: err });
-//       });
-//   });
-
 
 authRoutes.get('/get-all-emails', async(req, res) => {
   try {
@@ -155,7 +106,7 @@ authRoutes.get('/get-all-emails', async(req, res) => {
 ////////////////    Register    ////////////////
 
   authRoutes.post('/register', async(req, res) => {
-    const { username, UID, email } = req.body;
+    const { username, UID, email, status, profile_pic, background_pic } = req.body;
 
    try {
      const user = await db('users')
@@ -165,9 +116,9 @@ authRoutes.get('/get-all-emails', async(req, res) => {
            uid: UID,
            user_email: email,
            date_user_joined: new Date(),
-           user_status: 'New in town...',
-           user_profile_pic: 'https://dl.dropboxusercontent.com/scl/fi/y7kg02pndbzra2v0hlg15/logo.png?rlkey=wzp1tr9f2m1z9rg1j9hraaog6&dl=0',
-           profile_background: 'https://dl.dropboxusercontent.com/scl/fi/fyvbbqbf8grhralhhqtvn/pianoBackground.jpg?rlkey=0xy5uflju0yc61sueajzz5dw7&dl=0'
+           user_status: status,
+           user_profile_pic: profile_pic,
+           profile_background: background_pic
          })
            const userData = user[0];
            userId=userData.user_id
