@@ -2,6 +2,7 @@ import { Router } from "express";
 import dbConfig from '../database/db.js'
 import { authenticate } from "./authRoutes.js";
 const { db } = dbConfig
+import io from "../sockets.js";
 
 const messageRoutes = Router();
 
@@ -17,8 +18,8 @@ messageRoutes.get('/get-conversations', authenticate, async (req, res) => {
         // console.log('messages: ', messages);
         if (messages.length > 0) {
             for (const message of messages) {
-                const sender = await db('users').where('user_id', message.user2_id).select("username")
-                const receiver = await db('users').where('user_id', message.user1_id).select("username")
+                const receiver = await db('users').where('user_id', message.user2_id).select("username")
+                const sender = await db('users').where('user_id', message.user1_id).select("username")
                 // console.log(sender);
                 message.sender = sender[0].username
                 message.receiver = receiver[0].username
@@ -65,6 +66,7 @@ messageRoutes.post('/new-message', async (req, res) => {
             user2_id: user2_id,
             conversation_id: req.body.conversation_id
         })
+        io.emit('messageReceived')
         res.status(200).json({message: 'shit yea'})
 
     } catch (err) {
