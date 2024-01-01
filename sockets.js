@@ -18,7 +18,6 @@ io.on("connect", (socket) => {
     socket.on('sendMessage', ({ content, user2 }) => {
         const socket2 = connectedUsers[user2];
         if (socket2) {
-            console.log(`sending ${content} to ${user2}`);
             io.to(socket2).emit('message', { fromUserId: socket.id, content });
         } else {
             console.log(`User ${user2} is not connected, but they will see your message when they log in.`);

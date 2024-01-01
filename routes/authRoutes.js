@@ -11,6 +11,7 @@ import admin from 'firebase-admin';
  export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
+    console.log(headerToken);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const token = headerToken.split('Bearer ')[1];
