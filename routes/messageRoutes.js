@@ -9,7 +9,8 @@ const messageRoutes = Router();
 messageRoutes.get('/get-conversations', authenticate, async (req, res) => {
     try {
         const userId = req.user.user_id;
-        const conversations = await db('conversation').where('user1_id', userId).orWhere('user2_id', userId)
+        const unsorted = await db('conversation').where('user1_id', userId).orWhere('user2_id', userId)
+        const conversations = unsorted.sort((a, b) => new Date(b.time) - new Date(a.time))
         const convo_ids = conversations.map(convo => convo.conversation_id);
         const messages = await db('messages').whereIn('conversation_id', convo_ids);
         res.status(200).json({ messages: messages, conversations: conversations })
@@ -21,15 +22,15 @@ messageRoutes.get('/get-conversations', authenticate, async (req, res) => {
 messageRoutes.post('/new-conversation', async (req, res) => {
     try {
         const { user1username, user2username, user1_id, user2_id } = req.body
-        const conversations = await db('conversation')
+        const conversation = await db('conversation')
             .insert({
                 user1username: user1username,
                 user2username: user2username,
                 user1_id: user1_id,
                 user2_id: user2_id
-            }).returning('*')
-
-        res.status(200).json({ conversations: conversations })
+            }).returning('*');
+            io.emit('getConversations');
+        res.status(200).json({ conversation: conversation })
     } catch (err) {
         console.error(`Error inserting new convo (messageRoutes): ${err}`)
         res.status(500).json({ error: 'internal SERVER error' })
@@ -51,6 +52,11 @@ messageRoutes.post('/new-message', async (req, res) => {
                 user2_id: user2_id,
                 conversation_id: req.body.conversation_id
             })
+        await db('conversation')
+        .where('conversation_id', req.body.conversation_id)
+        .update({
+            time: db.raw('current_timestamp')
+          });
         io.emit('getConversations')
         res.status(200).json({ message: 'shit yea' })
 
