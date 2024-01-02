@@ -55,18 +55,18 @@ feedRoutes.delete('/delete-post', async (req, res) => {
     const feed_type = req.query.feed_type;
     const user_id = req.query.user_id;
     const authorized = await db('feed')
-        .where('user_id', user_id).andWhere('feed_id', feed_id)
-        .select('*')
+    .where('user_id', user_id).andWhere('feed_id', feed_id)
+    .select('*')
     if (authorized.length > 0) {
         try {
             try {
                 await db('stars')
-                    .where('post_id', feed_id)
-                    .del();
+                .where('post_id', feed_id)
+                .del();
             } catch (err) {
                 console.error(`Either no stars in db, or error deleting ${err.message}`)
             }
-            if (feed_type === "song") {
+            if (feed_type === "song" || feed_type === "collab") {
                 try {
                     const songIdData = await db('feed')
                     .where('feed_id', feed_id)

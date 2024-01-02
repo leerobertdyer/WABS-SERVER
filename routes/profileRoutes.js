@@ -62,6 +62,35 @@ const getDatabaseLink = async (req) => {
   }
 }
 
+profileRoutes.get('/get-notifications', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const notifications = await db('notification').where('user_id', userId).select('*')
+    if (notifications) {
+      res.status(200).json({notifications: notifications})
+    } else {
+      res.status(200).json({notifications: []})
+    }
+
+  } catch (err) {
+    console.error(`Error getting notifications (profileRoutes): ${err}`)
+    res.status(500).json({error: 'INTERNAL SERVER ERROR'})
+  }
+});
+
+profileRoutes.delete('/clear-notification', async (req, res) => {
+  const userId = req.body.user_id;
+  const type = req.body.type;
+  console.log(userId, type);
+  try {
+    await db('notification').where('user_id', userId).where('type', type).del();
+    const newNotes = await db('notification').where('user_id', userId).select('*')
+    res.status(200).json({newNotes: newNotes})
+  } catch (error) {
+    console.error(`Error clearing notification: ${error}`)
+  }
+})
+
 profileRoutes.put('/update-status', authenticate, async (req, res) => {
   try {
     const { id, newStatus } = req.body

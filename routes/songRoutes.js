@@ -7,6 +7,7 @@ const { dbx, isAccessTokenValid, refreshToken } = dropboxConfig
 const songRoutes = Router()
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+import io from '../sockets.js'
 
 const createSharedLink = async(req) => {
   const user = req.body.user_id
@@ -135,6 +136,7 @@ songRoutes.post('/submit-music', upload.single('song'), async(req, res) => {
       user_id: req.body.user_id,
       music_id: newMusicId.music_id
     })
+    io.emit('updateFeed')
     res.status(200).json({ newMusic: databaseLink })
   }
   catch (error) {
@@ -160,6 +162,7 @@ try {
       user_id: req.body.user_id,
       lyric_id: newLyricId.lyric_id
     })
+    io.emit('updateFeed')
    res.status(200).json({ newLyrics: req.body.lyrics })
 } catch (error) {
   console.error('Error submitting new lyrics in Database', error);

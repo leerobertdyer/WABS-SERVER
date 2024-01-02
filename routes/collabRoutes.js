@@ -1,4 +1,4 @@
-import e, { Router } from 'express'
+import { Router } from 'express'
 import { createSharedLink } from './songRoutes.js';
 import databaseConfig from '../database/db.js'
 const { db } = databaseConfig
@@ -6,6 +6,7 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 import { authenticate } from './authRoutes.js';
+import io from '../sockets.js';
 
 const collabRoutes = Router();
 
@@ -87,6 +88,12 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
         notes: req.body.notes
       })
     if (updatedCollab) {
+      await db('notification').insert({
+        type: "collab",
+        user_id: req.body.partner_id,
+        content: req.body.title
+      })
+      io.emit('updateFeed')
       res.status(200).json({ message: 'updated collab!' })
     } else {
       try {
@@ -100,6 +107,13 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
             music: req.body.music,
             notes: req.body.notes
           })
+          await db('notification').insert({
+            type: "collab",
+            user_id: req.body.user_id,
+            content: req.body.title
+  
+          })
+          io.emit('getNotifications')
         res.status(200).json({ message: 'inserted new collab!' })
       }
       catch (err) {

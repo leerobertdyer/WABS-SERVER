@@ -24,7 +24,7 @@ import admin from 'firebase-admin';
     req.user = userData[0]
     next();
   } catch (error) {
-    console.log(error);
+    console.error(`authenticate function failed: ${error}`);
     return res.status(401).json({ error: 'Authenticate Failed' });
   }
 };

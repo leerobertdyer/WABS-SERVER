@@ -42,8 +42,8 @@ messageRoutes.post('/new-message', async (req, res) => {
         const user1_id = req.body.user1_id;
         const user2_id = req.body.user2_id;
         const message_id = req.body.id;
-        const content = req.body.content
-
+        const content = req.body.content;
+        const user2username = req.body.user2username;
         await db('messages')
             .insert({
                 message_id: message_id,
@@ -58,8 +58,13 @@ messageRoutes.post('/new-message', async (req, res) => {
             time: db.raw('current_timestamp')
           });
         io.emit('getConversations')
-        res.status(200).json({ message: 'shit yea' })
-
+          await db('notification').insert({
+            user_id: user2_id,
+            type: 'message',
+            content: user2username
+          })
+        io.emit('getNotifications')
+        res.status(200).json({message: 'success'})
     } catch (err) {
         console.error(`Error inserting new message into db (messageRoutes): ${err}`)
     }
