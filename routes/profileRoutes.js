@@ -81,10 +81,10 @@ profileRoutes.get('/get-notifications', authenticate, async (req, res) => {
 profileRoutes.delete('/clear-notification', async (req, res) => {
   const userId = req.body.user_id;
   const type = req.body.type;
-  console.log(userId, type);
   try {
     await db('notification').where('user_id', userId).where('type', type).del();
     const newNotes = await db('notification').where('user_id', userId).select('*')
+    console.log(newNotes);
     res.status(200).json({newNotes: newNotes})
   } catch (error) {
     console.error(`Error clearing notification: ${error}`)
