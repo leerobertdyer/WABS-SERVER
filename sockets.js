@@ -24,7 +24,6 @@ io.on("connect", (socket) => {
         }
     });
 
-
     socket.on('disconnect', () => {
         console.log('🔥: A user disconnected');
 
@@ -34,5 +33,10 @@ io.on("connect", (socket) => {
         console.log(connectedUsers);
     });
 });
+
+ export const getConnectedUsers = () => {
+    return connectedUsers;
+};
+
 
 export default io

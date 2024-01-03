@@ -83,13 +83,27 @@ profileRoutes.delete('/clear-notification', async (req, res) => {
   const type = req.body.type;
   try {
     await db('notification').where('user_id', userId).where('type', type).del();
-    const newNotes = await db('notification').where('user_id', userId).select('*')
-    console.log(newNotes);
+    const newNotes = await db('notification').where('user_id', userId).where('type', type).select('*')
     res.status(200).json({newNotes: newNotes})
   } catch (error) {
     console.error(`Error clearing notification: ${error}`)
   }
+});
+
+profileRoutes.delete('/clear-notification-from-nav', async (req, res) => {
+  const note_id = req.body.note_id;
+  const user_id = req.body.user_id;
+  console.log(note_id, user_id);
+  try {
+    await db('notification').where('notification_id', note_id).del();
+    const newNotes = await db('notification').where('user_id', user_id)
+    res.status(200).json({ newNotes: newNotes })
+  } catch (error) {
+    console.error(`Error deleting notification (profileRoutes): ${error}`)
+    res.status(500).json({error: "internal sERVer ErrRor"})
+  }
 })
+
 
 profileRoutes.put('/update-status', authenticate, async (req, res) => {
   try {

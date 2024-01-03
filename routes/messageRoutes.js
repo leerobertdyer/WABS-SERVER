@@ -3,6 +3,7 @@ import dbConfig from '../database/db.js'
 import { authenticate } from "./authRoutes.js";
 const { db } = dbConfig
 import io from "../sockets.js";
+import { getConnectedUsers } from "../sockets.js";
 
 const messageRoutes = Router();
 
@@ -44,6 +45,7 @@ messageRoutes.post('/new-message', async (req, res) => {
         const message_id = req.body.id;
         const content = req.body.content;
         const user2username = req.body.user2username;
+        console.log(user2username);
         await db('messages')
             .insert({
                 message_id: message_id,
@@ -63,7 +65,9 @@ messageRoutes.post('/new-message', async (req, res) => {
             type: 'message',
             content: user2username
           })
-        io.emit('getNotifications')
+          const currentUsers = getConnectedUsers();
+          const socket2 = currentUsers[user2_id];
+          io.to(socket2).emit('getNotifications')
         res.status(200).json({message: 'success'})
     } catch (err) {
         console.error(`Error inserting new message into db (messageRoutes): ${err}`)

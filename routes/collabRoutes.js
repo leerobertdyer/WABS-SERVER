@@ -111,9 +111,8 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
             type: "collab",
             user_id: req.body.user_id,
             content: req.body.title
-  
           })
-          io.emit('getNotifications')
+          const newNotes = await db('notification').where
         res.status(200).json({ message: 'inserted new collab!' })
       }
       catch (err) {
