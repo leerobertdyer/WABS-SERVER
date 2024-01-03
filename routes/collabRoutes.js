@@ -124,9 +124,9 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
   }
 })
 
-collabRoutes.get('/get-profile-collabs', authenticate, async (req, res) => {
+collabRoutes.get('/get-profile-collabs', async (req, res) => {
   try {
-    const user_id = req.user.user_id
+    const user_id = Number(req.query.user)
     const userCollabs = await db('collab').select("*")
       .where('collab.user_id', user_id).orWhere('collab.partner_id', user_id)
       .innerJoin('feed', 'collab.feed_id', 'feed.feed_id')
