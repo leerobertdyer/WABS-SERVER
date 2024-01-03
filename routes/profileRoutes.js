@@ -166,6 +166,10 @@ profileRoutes.put('/upload-background-pic', upload.single('photo'), async (req, 
   } catch (err) {
     console.error(`Error uploading new Background to db: ${err}`)
   }
-})
+});
+
+profileRoutes.get('/other-user', async(req, res) => {
+
+});
 
 export default profileRoutes

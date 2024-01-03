@@ -148,7 +148,7 @@ songRoutes.post('/submit-music', upload.single('song'), async(req, res) => {
 songRoutes.post('/submit-lyrics', async(req, res) => {
 const title = req.body.title;
 const lyrics = req.body.lyrics;
-const id = req.body.title.user_id
+const id = req.body.user_id
 try {
   const [newLyricId] = await db('lyrics').insert({
     title: title,

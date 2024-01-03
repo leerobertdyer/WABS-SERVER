@@ -15,7 +15,7 @@ feedRoutes.get('/feed', async (req, res) => {
             .select('*')
             .orderBy('time', 'desc')
         const filteredFeed = [...newFeed].filter((post) => {
-        return (post.type === "lyrics" || post.type === "music");
+            return (post.type === "lyrics" || post.type === "music");
         });
         res.status(200).json({ newFeed: newFeed, filteredFeed: filteredFeed })
     } catch (error) {
@@ -55,25 +55,33 @@ feedRoutes.delete('/delete-post', async (req, res) => {
     const feed_type = req.query.feed_type;
     const user_id = req.query.user_id;
     const authorized = await db('feed')
-    .where('user_id', user_id).andWhere('feed_id', feed_id)
-    .select('*')
+        .where('user_id', user_id).andWhere('feed_id', feed_id)
+        .select('*')
     if (authorized.length > 0) {
         try {
             try {
                 await db('stars')
-                .where('post_id', feed_id)
-                .del();
+                    .where('post_id', feed_id)
+                    .del();
             } catch (err) {
                 console.error(`Either no stars in db, or error deleting ${err.message}`)
             }
             if (feed_type === "song" || feed_type === "collab") {
                 try {
-                    const songIdData = await db('feed')
-                    .where('feed_id', feed_id)
-                        .returning('song_id')
-                        .del()
+                    let songIdData
+                    if (feed_type === "collab") {
+                        songIdData = await db('collab')
+                            .where('collab_id', feed_id)
+                            .returning('song_id')
+                            .del()
+                    } else if (feed_type === "song") {
+                        songIdData = await db('feed')
+                            .where('feed_id', feed_id)
+                            .returning('song_id')
+                            .del()
+                    }
 
-                    const songId = songIdData[0].song_id
+                    songId = songIdData[0].song_id
 
                     if (songId) {
                         const dbx_url = await db('songs')
@@ -95,14 +103,17 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 } catch (err) {
                     console.error(`Error deleting status from feed table: ${err}`)
                 }
-            } else if (feed_type === "music") {
+            } else if (feed_type === "music" || feed_type === "collab") {
                 try {
-                    const musicIdData = await db('feed')
+                    const musicIdData = await db('collab')
                         .where('feed_id', feed_id)
-                        .returning('music_id')
-                        .del()
-
-                    const musicId = musicIdData[0].song_id
+                        .returning('music')
+                        .del();
+                    await db('feed')
+                        .where('feed_id', feed_id)
+                        .del();
+                    console.log(musicIdData);
+                    const musicId = musicIdData[0].music_id
 
                     if (musicId) {
                         const dbx_url = await db('music')
@@ -117,14 +128,17 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                     console.error(`Error deleting from feed or music table, ${err.message}`)
                 }
             } else if (feed_type === "lyrics") {
+                await db('collab')
+                    .where('feed_id', feed_id)
+                    .del();
                 const lyricId = await db('feed')
-                .where('feed_id', feed_id)
-                .returning('lyric_id')
-                .del()
+                    .where('feed_id', feed_id)
+                    .returning('lyric_id')
+                    .del();
                 await db('lyrics')
-                .where('lyric_id', lyricId)
-                .delete()
-            } 
+                    .where('lyric_id', lyricId)
+                    .del();
+            }
             io.emit('updateFeed')
             res.status(200).json({ message: `Post ${feed_id} deleted.` });
         } catch (err) {
@@ -132,6 +146,18 @@ feedRoutes.delete('/delete-post', async (req, res) => {
         }
     } else {
         console.log("Nice try, but this isn't your post buster");
+    }
+})
+
+feedRoutes.put("/update-sortfeed", async (req, res) => {
+    const userId = req.body.user_id;
+    const sortfeed = req.body.sortfeed
+    try {
+        await db('users').where('user_id', userId).update({ sortfeed: sortfeed })
+        res.status(200).json({ message: 'success' })
+    } catch (error) {
+        console.error(`Error updating user.sortfeed: ${error}`)
+        res.status(500).json({error: "internal SErviCE erroR"})
     }
 })
 
