@@ -11,7 +11,7 @@ import admin from 'firebase-admin';
  export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
-    console.log(headerToken);
+    // console.log(headerToken);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const token = headerToken.split('Bearer ')[1];
@@ -22,6 +22,7 @@ import admin from 'firebase-admin';
     .where('uid', req.uid)
     .select('*')
     req.user = userData[0]
+    // console.log('user in authenticate: ', userData[0]);
     next();
   } catch (error) {
     console.error(`authenticate function failed: ${error}`);
@@ -39,6 +40,7 @@ authRoutes.get('/check-session', authenticate, async(req, res) => {
   const uid = decodedToken.uid; 
   const userData = await db('users').where('uid', uid).select('*')
   const user = userData[0]
+  // console.log('user in check session: ', user);
   userId = user.user_id
   res.status(200).json({user: user})
   } else {
@@ -108,6 +110,7 @@ authRoutes.get('/get-all-emails', async(req, res) => {
 
   authRoutes.post('/register', async(req, res) => {
     const { username, UID, email, status, profile_pic, background_pic } = req.body;
+    // console.log('in register server: ', username, UID, email, status, profile_pic, background_pic);
 
    try {
      const user = await db('users')
