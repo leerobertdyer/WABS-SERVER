@@ -112,7 +112,8 @@ songRoutes.post('/submit-song', upload.single('song'), async (req, res) => {
     await db('users')
     .where('user_id', req.body.user_id)
     .update('score', userScore)
-
+    
+    io.emit('updateFeed')
     res.status(200).json({ newSong: databaseLink })
   }
   catch (error) {

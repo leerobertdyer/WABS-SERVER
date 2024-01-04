@@ -58,6 +58,7 @@ collabRoutes.put('/update-collab', async (req, res) => {
         })
       nextCollab = 'false'
     }
+    io.emit('updateFeed')
     res.status(200).json({ nextCollab: nextCollab });
   } catch (err) {
     console.error(`Trouble setting collab boolean in db: ${err}`)
@@ -259,6 +260,7 @@ collabRoutes.post('/finalize', async (req, res) => {
         .where('user_id', req.body.user_id)
         .del();
     })
+    io.emit('updateFeed')
     res.status(200).json({ message: `${req.body.title} posted to feed, and deleted from collab table` })
   } catch (err) {
     console.error(`Error inserting song or deleting collab: ${err}`)
