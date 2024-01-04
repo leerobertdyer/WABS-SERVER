@@ -83,7 +83,7 @@ profileRoutes.delete('/clear-notification', async (req, res) => {
   const type = req.body.type;
   try {
     await db('notification').where('user_id', userId).where('type', type).del();
-    const newNotes = await db('notification').where('user_id', userId).where('type', type).select('*')
+    const newNotes = await db('notification').where('user_id', userId).select('*')
     res.status(200).json({ newNotes: newNotes })
   } catch (error) {
     console.error(`Error clearing notification: ${error}`)
