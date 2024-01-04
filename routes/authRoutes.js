@@ -7,7 +7,6 @@ const { db } = databaseConfig
 const authRoutes = Router()
 import admin from 'firebase-admin';
 
-
  export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
@@ -18,10 +17,11 @@ import admin from 'firebase-admin';
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.uid = decodedToken.uid;
+    // console.log(req.uid);
     const userData = await db('users')
     .where('uid', req.uid)
     .select('*')
-    req.user = userData[0]
+    req.user = userData[0];
     // console.log('user in authenticate: ', userData[0]);
     next();
   } catch (error) {
@@ -110,7 +110,7 @@ authRoutes.get('/get-all-emails', async(req, res) => {
 
   authRoutes.post('/register', async(req, res) => {
     const { username, UID, email, status, profile_pic, background_pic } = req.body;
-    // console.log('in register server: ', username, UID, email, status, profile_pic, background_pic);
+    console.log('in register server: ', username, UID, email, status, profile_pic, background_pic);
 
    try {
      const user = await db('users')
