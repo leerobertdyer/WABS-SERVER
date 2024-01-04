@@ -30,7 +30,7 @@ messageRoutes.post('/new-conversation', async (req, res) => {
                 user1_id: user1_id,
                 user2_id: user2_id
             }).returning('*');
-            io.emit('getConversations');
+        io.emit('getConversations');
         res.status(200).json({ conversation: conversation })
     } catch (err) {
         console.error(`Error inserting new convo (messageRoutes): ${err}`)
@@ -55,22 +55,35 @@ messageRoutes.post('/new-message', async (req, res) => {
                 conversation_id: req.body.conversation_id
             })
         await db('conversation')
-        .where('conversation_id', req.body.conversation_id)
-        .update({
-            time: db.raw('current_timestamp')
-          });
+            .where('conversation_id', req.body.conversation_id)
+            .update({
+                time: db.raw('current_timestamp')
+            });
         io.emit('getConversations')
-          await db('notification').insert({
+        await db('notification').insert({
             user_id: user2_id,
             type: 'message',
             content: user2username
-          })
-          const currentUsers = getConnectedUsers();
-          const socket2 = currentUsers[user2_id];
-          io.to(socket2).emit('getNotifications')
-        res.status(200).json({message: 'success'})
+        })
+        const currentUsers = getConnectedUsers();
+        const socket2 = currentUsers[user2_id];
+        io.to(socket2).emit('getNotifications')
+        res.status(200).json({ message: 'success' })
     } catch (err) {
         console.error(`Error inserting new message into db (messageRoutes): ${err}`)
+    }
+})
+
+messageRoutes.get('/get-connected-users', async(req, res) => {
+    try {
+        let connectedUsers = getConnectedUsers()
+        const connectedUsersIds = Object.keys(connectedUsers)
+        connectedUsers = await db('users').select('username').whereIn('user_id', connectedUsersIds)
+        connectedUsers = connectedUsers.map(user => user.username)
+        res.status(200).json({ connectedUsers: connectedUsers })
+    } catch (error) {
+        console.error(`Trouble getting connectedUsers (mssgRoutes): ${error}`)
+        res.status(500).json({ error: 'interNalServIceErroR' })
     }
 })
 
