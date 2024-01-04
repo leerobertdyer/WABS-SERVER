@@ -54,10 +54,6 @@ feedRoutes.delete('/delete-post', async (req, res) => {
     const feed_id = req.query.feed_id;
     const feed_type = req.query.feed_type;
     const user_id = req.query.user_id;
-    const authorized = await db('feed')
-        .where('user_id', user_id).andWhere('feed_id', feed_id)
-        .select('*')
-    if (authorized.length > 0) {
         try {
             try {
                 await db('stars')
@@ -144,9 +140,6 @@ feedRoutes.delete('/delete-post', async (req, res) => {
         } catch (err) {
             console.error(`Error deleting post: ${err}`)
         }
-    } else {
-        console.log("Nice try, but this isn't your post buster");
-    }
 })
 
 feedRoutes.put("/update-sortfeed", async (req, res) => {

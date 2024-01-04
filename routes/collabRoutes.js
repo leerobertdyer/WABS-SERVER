@@ -93,7 +93,8 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
         user_id: req.body.partner_id,
         content: req.body.title
       })
-      io.emit('updateFeed')
+      io.emit('updateFeed');
+      io.emit('getNotifications');
       res.status(200).json({ message: 'updated collab!' })
     } else {
       try {
@@ -107,12 +108,13 @@ collabRoutes.put('/submit-collab-for-review', async (req, res) => {
             music: req.body.music,
             notes: req.body.notes
           })
-          await db('notification').insert({
-            type: "collab",
-            user_id: req.body.user_id,
-            content: req.body.title
-          })
-          const newNotes = await db('notification').where
+        await db('notification').insert({
+          type: "collab",
+          user_id: req.body.user_id,
+          content: req.body.title
+        })
+        io.emit('getNotifications');
+        io.emit('updateFeed')
         res.status(200).json({ message: 'inserted new collab!' })
       }
       catch (err) {
@@ -230,7 +232,7 @@ collabRoutes.post('/finalize', async (req, res) => {
         .where('user_id', req.body.user_id)
         .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
         .sum('amount')
-        console.log('userAmountData: ', userAmountData);
+      console.log('userAmountData: ', userAmountData);
 
       const partnerAmountData = await db('scoreboard')
         .where('user_id', req.body.partner_id)
