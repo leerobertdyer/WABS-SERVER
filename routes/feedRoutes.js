@@ -66,28 +66,28 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 try {
                     let songIdData
                     if (feed_type === "collab") {
-                        songIdData = await db('collab')
-                            .where('collab_id', feed_id)
-                            .returning('song_id')
+                        await db('collab')
+                            .where('feed_id', feed_id)
                             .del()
+                        await db('feed').where('feed_id', feed_id).del();
                     } else if (feed_type === "song") {
                         songIdData = await db('feed')
-                            .where('feed_id', feed_id)
-                            .returning('song_id')
-                            .del()
+                        .where('feed_id', feed_id)
+                        .returning('song_id')
+                        .del()
+                        songId = songIdData[0].song_id
+                        if (songId) {
+                            const dbx_url = await db('songs')
+                                .where('song_id', songId)
+                                .returning('song_file')
+                                .del()
+                            //*********** *********** *********** ***********//
+                            //*********** Handle DBX DELETE HERE ***********//
+                            //*********** *********** *********** ***********//
+                        }
                     }
-
-                    songId = songIdData[0].song_id
-
-                    if (songId) {
-                        const dbx_url = await db('songs')
-                            .where('song_id', songId)
-                            .returning('song_file')
-                            .del()
-                        //*********** *********** *********** ***********//
-                        //*********** Handle DBX DELETE HERE ***********//
-                        //*********** *********** *********** ***********//
-                    }
+                    
+                    io.emit('updateFeed')
                 } catch (err) {
                     console.error(`Error deleting from feed or songs table, ${err.message}`)
                 }
@@ -127,10 +127,11 @@ feedRoutes.delete('/delete-post', async (req, res) => {
                 await db('collab')
                     .where('feed_id', feed_id)
                     .del();
-                const lyricId = await db('feed')
+                const lyricIdData = await db('feed')
                     .where('feed_id', feed_id)
                     .returning('lyric_id')
                     .del();
+                const lyricId = lyricIdData[0].lyric_id
                 await db('lyrics')
                     .where('lyric_id', lyricId)
                     .del();
