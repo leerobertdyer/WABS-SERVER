@@ -7,7 +7,7 @@ const { db } = databaseConfig
 const authRoutes = Router()
 import admin from 'firebase-admin';
 
- export const authenticate = async (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   const headerToken = req.headers.authorization;
   if (!headerToken || !headerToken.startsWith('Bearer ')) {
     // console.log(headerToken);
@@ -19,8 +19,8 @@ import admin from 'firebase-admin';
     req.uid = decodedToken.uid;
     // console.log(req.uid);
     const userData = await db('users')
-    .where('uid', req.uid)
-    .select('*')
+      .where('uid', req.uid)
+      .select('*')
     req.user = userData[0];
     // console.log('user in authenticate: ', userData[0]);
     next();
@@ -33,32 +33,38 @@ import admin from 'firebase-admin';
 let userId
 
 ////////////////    session    ////////////////
-authRoutes.get('/check-session', authenticate, async(req, res) => {
-  if(req.headers) {
-  const token = req.headers.authorization.split('Bearer ')[1];
-  const decodedToken = await admin.auth().verifyIdToken(token);
-  const uid = decodedToken.uid; 
-  const userData = await db('users').where('uid', uid).select('*')
-  const user = userData[0]
-  // console.log('user in check session: ', user);
-  userId = user.user_id
-  res.status(200).json({user: user})
+authRoutes.get('/check-session', authenticate, async (req, res) => {
+  if (req.headers) {
+    try {
+      const token = req.headers.authorization.split('Bearer ')[1];
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      const uid = decodedToken.uid;
+      const userData = await db('users').where('uid', uid).select('*')
+      const user = userData[0]
+      // console.log('user in check session: ', user);
+      userId = user.user_id
+      res.status(200).json({ user: user })
+    } catch (error) {
+      res.status(500).json({error: 'internal Service Err'})
+      console.error(`Error authenticating: ${error}`)
+    }
+
   } else {
     console.log('no user logged in');
-    res.status(204); //need to respond better so there is no error on a guest load
+    res.status(200); //need to respond better so there is no error on a guest load
   }
 });
 ////////////////    DBX    ////////////////
 
 authRoutes.post('/dbx-auth', authenticate, async (req, res) => {
-    try {
-      const authUrl = await dbx.auth.getAuthenticationUrl(REDIRECT_URI, null, 'code', 'offline', null, 'none', false);
-      // console.log('Authorization URL:', authUrl);
-      res.json({ authUrl: authUrl })
-    } catch (error) {
-      console.error('Error generating authentication URL:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+  try {
+    const authUrl = await dbx.auth.getAuthenticationUrl(REDIRECT_URI, null, 'code', 'offline', null, 'none', false);
+    // console.log('Authorization URL:', authUrl);
+    res.json({ authUrl: authUrl })
+  } catch (error) {
+    console.error('Error generating authentication URL:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 let tempAuthToken = ''
@@ -76,11 +82,11 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
       // console.log('accessToken: ', tempAuthToken);
       // console.log('refreshToken: ', refreshToken);
       await db('dbx_tokens')
-      .insert({
-        user_id: userId,
-        token: tempAuthToken,
-        refresh: refreshToken
-      })
+        .insert({
+          user_id: userId,
+          token: tempAuthToken,
+          refresh: refreshToken
+        })
       tempAuthToken = ''
       res.redirect(`${process.env.REACT_APP_FRONTEND_URL}/profile`)
     }
@@ -91,7 +97,7 @@ authRoutes.get('/dbx-auth-callback', async (req, res) => {
 });
 
 
-authRoutes.get('/get-all-emails', async(req, res) => {
+authRoutes.get('/get-all-emails', async (req, res) => {
   try {
     const allUsersData = await db('users').select(['user_email', 'username'])
     const allUsers = []
@@ -99,40 +105,39 @@ authRoutes.get('/get-all-emails', async(req, res) => {
       allUsers.push(user.user_email)
       allUsers.push(user.username)
     }
-    res.status(200).json({allUsers: allUsers})
+    res.status(200).json({ allUsers: allUsers })
   } catch (error) {
     console.error(`Error fetching users from db: ${error}`)
-    res.status(500).json({error: "internal SERVER error"})
+    res.status(500).json({ error: "internal SERVER error" })
   }
 })
 
 ////////////////    Register    ////////////////
 
-  authRoutes.post('/register', async(req, res) => {
-    const { username, UID, email, status, profile_pic, background_pic } = req.body;
-    console.log('in register server: ', username, UID, email, status, profile_pic, background_pic);
+authRoutes.post('/register', async (req, res) => {
+  const { username, UID, email, status, profile_pic, background_pic } = req.body;
+  console.log('in register server: ', username, UID, email, status, profile_pic, background_pic);
 
-   try {
-     const user = await db('users')
-         .returning("*")
-         .insert({
-           username: username,
-           uid: UID,
-           user_email: email,
-           date_user_joined: new Date(),
-           user_status: status,
-           user_profile_pic: profile_pic,
-           profile_background: background_pic
-         })
-           const userData = user[0];
-           userId=userData.user_id
-               res.json(userData);
-   }
-          catch(err) {
-            console.error(`Error with new register: ${err}`)
-            res.status(400).json({ error: 'Unable to register1', message: err.message });
-          }
+  try {
+    const user = await db('users')
+      .returning("*")
+      .insert({
+        username: username,
+        uid: UID,
+        user_email: email,
+        date_user_joined: new Date(),
+        user_status: status,
+        user_profile_pic: profile_pic,
+        profile_background: background_pic
       })
+    const userData = user[0];
+    userId = userData.user_id
+    res.json(userData);
+  }
+  catch (err) {
+    console.error(`Error with new register: ${err}`)
+    res.status(400).json({ error: 'Unable to register1', message: err.message });
+  }
+})
 
-  export default authRoutes 
-  
+export default authRoutes
