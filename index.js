@@ -11,6 +11,7 @@ import admin from 'firebase-admin';
 import messageRoutes from './routes/messageRoutes.js';
 import { createServer } from 'http'
 import io from './sockets.js';
+import gptRoutes from './routes/gptRoutes.js';
 
 let serviceAccount
 if (process.env.RENDER) {
@@ -61,6 +62,7 @@ server.use('/auth', authRoutes)
 server.use('/', feedRoutes)
 server.use('/collab', collabRoutes)
 server.use('/messages', messageRoutes)
+server.use('/', gptRoutes)
 
 process.on('exit', () => {
   db.destroy();

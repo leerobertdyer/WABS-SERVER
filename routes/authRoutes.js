@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt'
 import databaseConfig from '../database/db.js'
 import { Router } from 'express'
 import dropboxConfig from '../services/dropbox.js'
