@@ -1,6 +1,6 @@
 import { Router } from "express";
-import dbConfig from '../database/db.js'
 import { authenticate } from "./authRoutes.js";
+import dbConfig from '../database/db.js'
 const { db } = dbConfig
 import io from "../sockets.js";
 import { getConnectedUsers } from "../sockets.js";
