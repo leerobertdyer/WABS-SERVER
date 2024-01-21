@@ -10,7 +10,6 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 promptRoutes.post('/get-prompt', async (req, res) => {
   const userId = req.body.userId
-  console.log(userId);
   const prompt = `You are a creative song prompt builder. You use a variety of topics to furnish short thoughtful song prompts that can later be checked against lyrics to see wether a user has followed the prompt or not. Pull from a wide variety of themes including but not limited to: Nature, Nostalgia, Romance, Family, Future, Other Environments, Fantasy, Sci-Fi, Silliness, Seriousness, Sadness. Only give one prompt at a time.`
   try {
     const prompts = await db('prompt').select('prompt').where('user_id', userId).whereRaw('EXTRACT(MONTH FROM created) = EXTRACT(MONTH FROM CURRENT_DATE)')
@@ -61,6 +60,34 @@ promptRoutes.get('/user-prompts', authenticate, async(req, res) => {
     res.status(200).json({prompts: prompts})
   } catch (error) {
     console.error(`Error getting prompts from DB: ${error}`)
+  }
+})
+
+promptRoutes.put('/check-prompt', async(req, res) => {
+  try {
+    const prompt = req.body.prompt
+    const songTitle = req.body.songTitle
+    const songLyrics = req.body.songLyrics
+    const userId = req.body.userId
+
+    const checkPrompt = `Here is a song prompt you gave me earlier: "${prompt}". Read through this song and tell me if the song matches the prompt. Song Title: ${songTitle}, Song Lyrics: "${songLyrics}". First type either "YES" or "NO" (without punctuation or quotes) then follow up with some constructive feedback on the song.`
+
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: checkPrompt }],
+      stream: true,
+    });
+    let gptResponse = ''
+    for await (const chunk of stream) {
+      if (chunk.choices[0]?.delta?.content) {
+        gptResponse += chunk.choices[0].delta.content;
+      }
+    }
+
+    console.log(gptResponse);
+
+  } catch (error) {
+    console.error(`Error checking prompt: ${error}`)
   }
 })
 
