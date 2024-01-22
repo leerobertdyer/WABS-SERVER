@@ -12,6 +12,8 @@ import messageRoutes from './routes/messageRoutes.js';
 import { createServer } from 'http'
 import io from './sockets.js';
 import promptRoutes from './routes/promptRoutes.js';
+import portfolioRoutes from './routes/portfolioRoutes.js';
+
 
 let serviceAccount
 if (process.env.RENDER) {
@@ -38,12 +40,29 @@ const server = express();
 const port = 4000;
 
 /////////// Middleware ////////////
+const allowedOrigins = [
+  'https://www.leedyer.com',
+  process.env.REACT_APP_FRONTEND_URL,
+  `${process.env.REACT_APP_FRONTEND_URL}/`,
+  '/socket.io'
+];
+
+// Define CORS options
 const corsOptions = {
-  origin: [process.env.REACT_APP_FRONTEND_URL, `${process.env.REACT_APP_FRONTEND_URL}/`, '/socket.io'],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  origin: (origin, callback) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+      } else {
+          callback(new Error('Not allowed by CORS'));
+      }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,CONNECT,TRACE',
+  allowedHeaders: 'Content-Type, Authorization, X-Content-Type-Options, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
   credentials: true,
   optionsSuccessStatus: 204,
+  maxAge: 7200 
 };
+
 server.use(cors(corsOptions));
 
 server.use(express.json());
@@ -63,6 +82,7 @@ server.use('/', feedRoutes)
 server.use('/collab', collabRoutes)
 server.use('/messages', messageRoutes)
 server.use('/', promptRoutes)
+server.use('/portfolio', portfolioRoutes)
 
 process.on('exit', () => {
   db.destroy();
