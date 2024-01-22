@@ -12,6 +12,26 @@ const collabRoutes = Router();
 
 collabRoutes.get('/get-all', async (req, res) => {
   try {
+    const usersWhoHaveSubmitted = await db('scoreboard')
+        .select('user_id')
+        .distinct()
+        .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+    console.log(usersWhoHaveSubmitted);
+    for (const user of usersWhoHaveSubmitted) {
+        const userAmountData = await db('scoreboard')
+            .where('user_id', user.user_id)
+            .whereRaw('extract(month from "created") = ?', [new Date().getMonth() + 1])
+            .sum('amount')
+          const userScore = userAmountData[0].sum
+          await db('users')
+            .where('user_id', user.user_id)
+            .update('score', userScore)
+    }
+} catch (error) {
+    console.error(`Error updating scores: ${error}`)
+}
+
+  try {
     const collabUsers = await db('users')
       .select("*")
       .where('collab', '=', 'true')
