@@ -42,7 +42,7 @@ const port = 4000;
 /////////// Middleware ////////////
 const allowedOrigins = [
   'https://www.leedyer.com',
-  'https://www.auntvicki.rocks/merch',
+  'https://www.auntvicki.rocks',
   process.env.REACT_APP_FRONTEND_URL,
   `${process.env.REACT_APP_FRONTEND_URL}/`,
   '/socket.io'
